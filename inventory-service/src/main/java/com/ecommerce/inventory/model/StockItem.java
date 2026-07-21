@@ -22,6 +22,8 @@ public class StockItem {
 	private UUID stockItemId;
 
 	private UUID productId;
+	
+	private UUID waeHouseId;
 	// Total physical stock: 50 units
 	private int quantityOnHand; 
 	 // sum of active reservations

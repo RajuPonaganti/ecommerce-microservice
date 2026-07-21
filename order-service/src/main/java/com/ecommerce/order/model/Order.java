@@ -17,6 +17,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -42,6 +43,12 @@ public class Order {
     private OrderStatus status;
 
     private BigDecimal totalAmount;
+    
+    private String couponCode;
+    private String paymentRef;
 
     private Instant createdAt = Instant.now();
+    
+    @Version
+    private long version;
 }
