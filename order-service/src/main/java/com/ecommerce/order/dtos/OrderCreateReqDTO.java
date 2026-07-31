@@ -17,4 +17,5 @@ public class OrderCreateReqDTO {
 
 
     private BigDecimal totalAmount;
+    private BigDecimal discount;
 }

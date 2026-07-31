@@ -5,6 +5,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import com.ecommerce.order.enums.OrderStatus;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -21,7 +23,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "order")
+@Table(name = "tbl_order")
 @Setter
 @Getter
 @Builder
@@ -29,11 +31,11 @@ public class Order {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
-	private UUID OrderId;
+	private UUID orderId;
 	
 	private UUID userId;    // Who placed the order (reference to User Service)
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "torder")
     // OneToMany: one Order has many OrderItems
     // cascade ALL: when you save an Order, all its items are also saved
     // LAZY: don't load items from DB until they are actually accessed (performance)
@@ -43,6 +45,9 @@ public class Order {
     private OrderStatus status;
 
     private BigDecimal totalAmount;
+    private BigDecimal taxAmount;
+    private BigDecimal discountAmount;
+    private BigDecimal finalAmount;
     
     private String couponCode;
     private String paymentRef;

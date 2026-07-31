@@ -10,11 +10,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ecommerce.seller.dto.SellerDTO;
 import com.ecommerce.seller.service.SellerService;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/v1/seller")
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class SellerController {
 
 	private final SellerService sellerService;

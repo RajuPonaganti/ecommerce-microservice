@@ -3,10 +3,14 @@ package com.ecommerce.inventory;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import com.ecommerce.inventory.exception.StockNotFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -17,6 +21,13 @@ public class GlobalExceptionHandler {
 		ex.getBindingResult().getFieldErrors().forEach(e->map.put(e.getField(), e.getCode()));
 		return ResponseEntity.badRequest().body(map);
 
+	}
+	
+	@ExceptionHandler(StockNotFoundException.class)
+	public ResponseEntity<ProblemDetail> handleStockNotFound(StockNotFoundException ex) {
+		ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+		pd.setTitle("Stock Not Found");
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(pd);
 	}
 
 }

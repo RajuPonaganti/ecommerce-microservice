@@ -10,11 +10,11 @@ import com.ecommerce.seller.model.SellerBankAccount;
 import com.ecommerce.seller.model.SellerStatus;
 import com.ecommerce.seller.repository.ISellerRepository;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
 public class SellerService {
 

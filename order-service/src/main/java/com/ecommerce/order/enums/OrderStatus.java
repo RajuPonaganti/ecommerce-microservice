@@ -1,4 +1,4 @@
-package com.ecommerce.order.model;
+package com.ecommerce.order.enums;
 
 public enum OrderStatus {
 	CREATED, // Order received but not processed yet

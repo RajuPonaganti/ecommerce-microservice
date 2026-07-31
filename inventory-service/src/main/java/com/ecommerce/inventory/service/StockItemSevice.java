@@ -7,24 +7,25 @@ import org.springframework.stereotype.Service;
 
 import com.ecommerce.inventory.dtos.InventoryAvailabilityDTO;
 import com.ecommerce.inventory.dtos.StockItemDTO;
+import com.ecommerce.inventory.exception.StockNotFoundException;
 import com.ecommerce.inventory.model.StockItem;
 import com.ecommerce.inventory.repository.StockItemRepository;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class StockItemSevice {
 
 	private final StockItemRepository stockItemRepository;
 
-	public ResponseEntity<StockItemDTO> addInventory(StockItemDTO dto, UUID productId) {
-		log.info("StockItemSevice : addInventory (dto, productId) {} {}", dto, productId);
+	public ResponseEntity<StockItemDTO> addInventory(StockItemDTO dto) {
+		log.info("StockItemSevice : addInventory (dto, productId) {} ", dto);
 
 		StockItem stockItem = StockItem.builder()
-				.productId(productId)
+				.productId(dto.getProductId())
 				.waeHouseId(dto.getWaeHouseId())
 				.quantityOnHand(dto.getQuantityOnHand())
 				.quantityReserved(0)
@@ -41,11 +42,10 @@ public class StockItemSevice {
 		return ResponseEntity.ok(response);
 	}
 
-	public ResponseEntity<InventoryAvailabilityDTO> getAvailability(UUID productId, int requiredQuantity) {
-		log.info("StockItemSevice : getAvailability (productId, requiredQuantity) {} {}", productId, requiredQuantity);
+	public ResponseEntity<InventoryAvailabilityDTO> getAvailability(UUID productId, int requiredQuantity) {		log.info("StockItemSevice : getAvailability (productId, requiredQuantity) {} {}", productId, requiredQuantity);
 
 		StockItem stockItem = stockItemRepository.findByProductId(productId)
-				.orElseThrow(() -> new RuntimeException("Stock not found for productId: " + productId));
+				.orElseThrow(() -> new StockNotFoundException("Stock not found for productId: " + productId));
 
 		int available = stockItem.getAvailableQuantity();
 
