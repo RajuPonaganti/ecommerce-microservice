@@ -14,7 +14,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "stock_item")
+@Table(name = "stock_reservation")
 @Setter
 @Getter
 public class StockReservation {
@@ -28,6 +28,6 @@ public class StockReservation {
 	private int quantity;
 	private UUID orderId;
 	@Enumerated(EnumType.STRING)
-	private Status status;
+	private StockReservationStatus status;
 	private Instant expiresAt;
 }

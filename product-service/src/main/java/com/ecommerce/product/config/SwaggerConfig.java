@@ -1,34 +1,19 @@
 package com.ecommerce.product.config;
 
-import java.util.List;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.info.License;
-import io.swagger.v3.oas.models.servers.Server;
 
 @Configuration
 public class SwaggerConfig {
-	 @Bean
-	    public OpenAPI productServiceOpenAPI() {
-	        return new OpenAPI()
-	                .info(new Info()
-	                        .title("Product Service API")
-	                        .description("REST API documentation for the Product Service")
-	                        .version("1.0.0")
-	                        .contact(new Contact()
-	                                .name("eCommerce Team")
-	                                .email("support@ecommerce.com"))
-	                        .license(new License()
-	                                .name("Apache 2.0")
-	                                .url("https://www.apache.org/licenses/LICENSE-2.0")))
-	                .servers(List.of(
-	                        new Server()
-	                                .url("http://localhost:8081")
-	                                .description("Local Development Server")));
-	    }
+	@Bean
+	public OpenAPI openAPI() {
+		return new OpenAPI()
+				.info(new Info()
+						.title("product API")
+						.version("v1")
+						.description("PeopleCenter Backend API Documentation"));
+	}
 }

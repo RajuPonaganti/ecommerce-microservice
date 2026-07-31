@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -15,6 +16,7 @@ import lombok.Setter;
 @Table(name = "stock_item")
 @Setter
 @Getter
+@Builder
 public class StockItem {
 
 	@Id

@@ -38,7 +38,7 @@ public class ProductController {
 	// POST /v1/products — JWT (SELLER), sellerId injected by gateway as X-Seller-Id
 	@PostMapping
 	public ResponseEntity<ProductDto> createProduct(
-			@Valid @RequestBody ProductCreateDto dto,
+			@Valid @RequestBody final ProductCreateDto dto,
 			@RequestHeader("X-Seller-Id") UUID sellerId) {
 
 		ProductDto created = productService.createProduct(dto, sellerId);
@@ -47,7 +47,7 @@ public class ProductController {
 
 	// GET /v1/products/{productId} — public
 	@GetMapping("/{productId}")
-	public ResponseEntity<ProductDto> getProduct(@PathVariable UUID productId) {
+	public ResponseEntity<ProductDto> getProduct(@PathVariable final UUID productId) {
 		return ResponseEntity.ok(productService.getProduct(productId));
 	}
 
@@ -76,8 +76,8 @@ public class ProductController {
 	// POST /v1/products/{productId}/publish — JWT (SELLER)
 	@PostMapping("/{productId}/publish")
 	public ResponseEntity<ProductDto> publishProduct(
-			@PathVariable UUID productId,
-			@RequestHeader("X-Seller-Id") UUID sellerId) {
+			@PathVariable final UUID productId,
+			@RequestHeader("X-Seller-Id") final UUID sellerId) {
 
 		return ResponseEntity.ok(productService.publishProduct(productId, sellerId));
 	}

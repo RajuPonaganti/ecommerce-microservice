@@ -13,6 +13,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ProductCreateDto {
+	
+	private String producId;
 
 	@NotBlank
 	@Size(max = 500)

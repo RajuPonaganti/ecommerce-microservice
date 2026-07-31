@@ -23,13 +23,18 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
 @Table(name = "product", uniqueConstraints = @UniqueConstraint(columnNames = { "seller_id", "sku" }))
 @Setter
 @Getter
+@AllArgsConstructor
+@NoArgsConstructor
 public class Product {
 
 	@Id
@@ -60,7 +65,7 @@ public class Product {
 	@Column(nullable = false)
 	private String category;
 
-	// @Enumerated stores enum as a string in the DB (not a number)
+	// @Enumerated stores enum as  a string in the DB (not a number)
 	// Using STRING is safer — if you reorder enum values, DB is not affected
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)

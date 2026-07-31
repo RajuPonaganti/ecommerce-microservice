@@ -1,0 +1,73 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: payment-gateway
+  datasource:
+    url: jdbc:postgresql://localhost:5432/payment_gateway_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      pool-name: PaymentGatewayPool
+
+  jpa:
+    hibernate:
+      ddl-auto: validate          # Flyway owns the schema — Hibernate only validates
+    show-sql: true
+    open-in-view: false           # Avoid lazy-load issues in web layer
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: public
+        jdbc:
+          batch_size: 20          # Efficient batch inserts for audit rows
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+
+# ── Payment simulation configuration ──────────────────────────────────────────
+payment:
+  simulation:
+    card:
+      otp-failure-rate: 0.10            # 10% wrong OTP
+      insufficient-balance-rate: 0.15  # 15% insufficient balance
+      min-delay-ms: 500
+      max-delay-ms: 2000
+    netbanking:
+      timeout-rate: 0.05               # 5% bank server timeout
+      invalid-credentials-rate: 0.10  # 10% invalid credentials
+      min-delay-ms: 800
+      max-delay-ms: 2500
+    upi:
+      failure-rate: 0.20               # 20% failure rate
+      min-delay-ms: 300
+      max-delay-ms: 1200
+
+# ── OpenAPI / Swagger UI ───────────────────────────────────────────────────────
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+    display-request-duration: true
+    try-it-out-enabled: true
+
+# ── Logging ────────────────────────────────────────────────────────────────────
+logging:
+  level:
+    com.paymentgateway: DEBUG
+    org.springframework.web: INFO
+    org.flywaydb: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE

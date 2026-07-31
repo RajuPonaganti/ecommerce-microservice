@@ -43,8 +43,7 @@ public class ProductService {
 
 	@Transactional(readOnly = true)
 	public ProductDto getProduct(UUID productId) {
-		return productRepository.findById(productId)
-				.map(this::toDto)
+		return productRepository.findById(productId).map(this::toDto)
 				.orElseThrow(() -> new ProductNotFoundException(productId));
 	}
 
@@ -57,14 +56,22 @@ public class ProductService {
 			throw new ProductAccessDeniedException(productId, sellerId);
 		}
 
-		if (dto.getTitle() != null)       product.setTitle(dto.getTitle());
-		if (dto.getDescription() != null) product.setDescription(dto.getDescription());
-		if (dto.getBrand() != null)       product.setBrand(dto.getBrand());
-		if (dto.getPrice() != null)       product.setPrice(dto.getPrice());
-		if (dto.getMrp() != null)         product.setMrp(dto.getMrp());
-		if (dto.getCurrency() != null)    product.setCurrency(dto.getCurrency());
-		if (dto.getCategory() != null)    product.setCategory(dto.getCategory());
-		if (dto.getAttributes() != null)  product.setAttributes(dto.getAttributes());
+		if (dto.getTitle() != null)
+			product.setTitle(dto.getTitle());
+		if (dto.getDescription() != null)
+			product.setDescription(dto.getDescription());
+		if (dto.getBrand() != null)
+			product.setBrand(dto.getBrand());
+		if (dto.getPrice() != null)
+			product.setPrice(dto.getPrice());
+		if (dto.getMrp() != null)
+			product.setMrp(dto.getMrp());
+		if (dto.getCurrency() != null)
+			product.setCurrency(dto.getCurrency());
+		if (dto.getCategory() != null)
+			product.setCategory(dto.getCategory());
+		if (dto.getAttributes() != null)
+			product.setAttributes(dto.getAttributes());
 		product.setUpdatedAt(Instant.now());
 
 		return toDto(productRepository.save(product));
