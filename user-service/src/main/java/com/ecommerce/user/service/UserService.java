@@ -86,6 +86,26 @@ public class UserService {
         return toDto(userRepository.save(user));
     }
 
+    // ── Set / update password ─────────────────────────────────────────────────
+
+    @Transactional
+    public void setPassword(UUID userId, String rawPassword) {
+        User user = findUser(userId);
+
+        UserCredentials credentials = credentialsRepository
+                .findByUser_UserId(userId)
+                .orElseGet(() -> {
+                    // No credentials record yet — create one (e.g. OAuth-registered users)
+                    UserCredentials c = new UserCredentials();
+                    c.setUser(user);
+                    c.setCreatedAt(Instant.now());
+                    return c;
+                });
+
+        credentials.setPassword(passwordEncoder.encode(rawPassword));
+        credentialsRepository.save(credentials);
+    }
+
     // ── Soft delete ───────────────────────────────────────────────────────────
 
     @Transactional

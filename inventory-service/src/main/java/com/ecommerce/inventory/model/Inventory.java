@@ -21,7 +21,7 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class StockItem {
+public class Inventory {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)

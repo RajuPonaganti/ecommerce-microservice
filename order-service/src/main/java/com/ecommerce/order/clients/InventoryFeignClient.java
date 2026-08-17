@@ -16,8 +16,10 @@ public interface InventoryFeignClient {
 			@PathVariable UUID productId,
 			@RequestParam int requiredQuantity);
 
-	public void reserveInventory(UUID orderId);
-
-	public void releaseInventory(UUID orderId);
+	/*
+	 * public void reserveInventory(UUID orderId);
+	 * 
+	 * public void releaseInventory(UUID orderId);
+	 */
 
 }

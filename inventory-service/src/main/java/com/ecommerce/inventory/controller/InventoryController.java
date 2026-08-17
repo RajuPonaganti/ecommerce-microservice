@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ecommerce.inventory.dtos.InventoryAvailabilityDTO;
-import com.ecommerce.inventory.dtos.StockItemDTO;
-import com.ecommerce.inventory.service.StockItemSevice;
+import com.ecommerce.inventory.dtos.InventoryDTO;
+import com.ecommerce.inventory.service.InventorySevice;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,10 +23,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class InventoryController {
 
-	private final StockItemSevice service;
+	private final InventorySevice service;
 
 	@PostMapping
-	public ResponseEntity<?> addInventory(@Valid @RequestBody StockItemDTO dto) {
+	public ResponseEntity<?> addInventory(@Valid @RequestBody InventoryDTO dto) {
 		return service.addInventory(dto);
 	}
 

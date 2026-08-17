@@ -18,8 +18,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
@@ -27,6 +29,8 @@ import lombok.Setter;
 @Setter
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Order {
 
 	@Id
@@ -54,6 +58,6 @@ public class Order {
 
     private Instant createdAt = Instant.now();
     
-    @Version
-    private long version;
+	@Version
+    private Long version;  // boxed Long — null means new entity, Hibernate sets it on first INSERT
 }

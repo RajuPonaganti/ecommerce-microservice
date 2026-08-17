@@ -4,18 +4,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-@Setter
-@Getter
-@NoArgsConstructor
-public class OrderCreateReqDTO {
-	private UUID userId;    // Who placed the order (reference to User Service)
-
-    private List<OrderItemDetailDTO> items;
-
-
-    private BigDecimal totalAmount;
-    private BigDecimal discount;
+public record OrderCreateReqDTO(UUID userId, List<OrderItemDetailDTO> items, BigDecimal totalAmount, BigDecimal discount) {
+	
 }

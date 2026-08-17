@@ -8,4 +8,6 @@ import com.ecommerce.inventory.model.StockReservation;
 
 public interface StockReservationRepository extends JpaRepository<StockReservation, UUID>{
 
+	boolean existsByOrderId(UUID orderId);
+
 }

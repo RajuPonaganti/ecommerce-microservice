@@ -1,5 +1,7 @@
 package com.ecommerce.order.controller;
 
+import java.util.UUID;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,9 +22,8 @@ public class OrderController {
 	private final OrderService orderService;
 
 	@PostMapping
-	public ResponseEntity<OrderCreateRespDTO> createOrder(@RequestBody OrderCreateReqDTO dto) {
-		OrderCreateRespDTO resp = orderService.createOrder(dto);
-		return ResponseEntity.status(HttpStatus.CREATED).body(resp);
+	public ResponseEntity<UUID> createOrder(@RequestBody OrderCreateReqDTO dto) {
+		return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(dto));
 
 	}
 }

@@ -2,6 +2,7 @@ package com.ecommerce.user.controller;
 
 import com.ecommerce.user.dto.AddressDto;
 import com.ecommerce.user.dto.RegisterRequest;
+import com.ecommerce.user.dto.SetPasswordRequest;
 import com.ecommerce.user.dto.UpdateUserRequest;
 import com.ecommerce.user.dto.UserDto;
 import com.ecommerce.user.service.UserService;
@@ -71,6 +72,19 @@ public class UserController {
             @Valid @RequestBody AddressDto addressDto) {
         AddressDto created = userService.addAddress(userId, addressDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    /**
+     * PATCH /v1/users/{userId}/password
+     * Set or update the password for a user. Requires JWT (self).
+     * Returns 204 No Content on success — never echo passwords back.
+     */
+    @PatchMapping("/{userId}/password")
+    public ResponseEntity<Void> setPassword(
+            @PathVariable UUID userId,
+            @Valid @RequestBody SetPasswordRequest request) {
+        userService.setPassword(userId, request.password());
+        return ResponseEntity.noContent().build(); // 204
     }
 
     /**
