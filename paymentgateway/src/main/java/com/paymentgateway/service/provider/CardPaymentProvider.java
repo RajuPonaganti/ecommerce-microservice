@@ -112,8 +112,8 @@ public class CardPaymentProvider implements PaymentProvider {
                 .cardBin(bin)
                 .cardNetwork(network)
                 .cardType(cardType)
-                .expiryMonth(expiryMonth)
-                .expiryYear(expiryYear)
+                .expiryMonth((short) expiryMonth)
+                .expiryYear((short) expiryYear)
                 .cardHolderName(request.getCardHolderName().toUpperCase().trim())
                 .build();
 

@@ -7,7 +7,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/payment_gateway_db
     username: postgres
-    password: postgres
+    password: root
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -17,7 +17,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate          # Flyway owns the schema — Hibernate only validates
+      ddl-auto: update          # Flyway owns the schema — Hibernate only validates
     show-sql: true
     open-in-view: false           # Avoid lazy-load issues in web layer
     properties:

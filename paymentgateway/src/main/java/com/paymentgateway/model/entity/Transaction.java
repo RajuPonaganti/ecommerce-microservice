@@ -56,7 +56,7 @@ public class Transaction {
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal amount;
 
-    @Column(nullable = false, length = 3)
+    @Column(nullable = false)
     private String currency;
 
     @Enumerated(EnumType.STRING)
@@ -67,7 +67,7 @@ public class Transaction {
     @Column(nullable = false, length = 30)
     private PaymentStatus status;
 
-    @Column(name = "failure_reason", columnDefinition = "TEXT")
+    @Column(name = "failure_reason")
     private String failureReason;
 
     @Column(name = "gateway_reference_id", length = 64)
@@ -82,7 +82,7 @@ public class Transaction {
     @Column(name = "customer_name", length = 255)
     private String customerName;
 
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Column(name = "description")
     private String description;
 
     @CreationTimestamp

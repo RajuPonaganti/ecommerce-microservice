@@ -16,7 +16,7 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 import com.ecommerce.inventory.events.OrderCreatedEventDeserializer;
 
 @Configuration
-public class KafkaConsumerConfig {
+public class InventoryKafkaConsumerConfig {
 	@Bean
 	ConsumerFactory<String, Object> consumerfactory(){
 		Map<String, Object> config = new HashMap<>();

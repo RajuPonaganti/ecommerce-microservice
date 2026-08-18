@@ -69,11 +69,11 @@ public class CardPaymentDetails {
 
     /** Expiry month (1–12). */
     @Column(name = "expiry_month", nullable = false)
-    private int expiryMonth;
+    private short expiryMonth;
 
     /** Expiry year (4-digit, e.g. 2026). */
     @Column(name = "expiry_year", nullable = false)
-    private int expiryYear;
+    private short expiryYear;
 
     /** Name of the card holder as printed on the card. */
     @Column(name = "card_holder_name", nullable = false, length = 255)

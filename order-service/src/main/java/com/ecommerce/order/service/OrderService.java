@@ -1,5 +1,6 @@
 package com.ecommerce.order.service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -9,9 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ecommerce.order.dtos.OrderCreateReqDTO;
-import com.ecommerce.order.dtos.OrderCreateRespDTO;
 import com.ecommerce.order.dtos.OrderItemDetailDTO;
 import com.ecommerce.order.enums.OrderStatus;
+import com.ecommerce.order.events.EventName;
 import com.ecommerce.order.events.OrderCreatedEvent;
 import com.ecommerce.order.model.Order;
 import com.ecommerce.order.model.OrderItem;
@@ -26,7 +27,8 @@ import lombok.extern.slf4j.Slf4j;
 public class OrderService {
 	private final OrderRepository orderRepository;
 	private final KafkaTemplate<String, Object> KafkaTemplate;
-
+	
+	
 	/*
 	 * @CircuitBreaker(name = "inventory-service", fallbackMethod =
 	 * "inventoryFallback") public OrderCreateRespDTO createOrder(OrderCreateReqDTO
@@ -78,8 +80,8 @@ public class OrderService {
 		List<OrderItem> collect = dto.items().stream().map(e -> buildOrderItem(e, order)).collect(Collectors.toList());
 		order.setItems(collect);
 		Order save = orderRepository.save(order);
-		OrderCreatedEvent event = new OrderCreatedEvent(save.getOrderId(), dto.items(), save.getFinalAmount(), save.getUserId());
-		KafkaTemplate.send("order.created.v1", save.getOrderId().toString(), event);
+		OrderCreatedEvent event = new OrderCreatedEvent(UUID.randomUUID(), save.getOrderId(), Instant.now(), dto.items(), save.getFinalAmount(), save.getUserId());
+		KafkaTemplate.send(EventName.ORDER_CREATED_EVENT_V1, save.getOrderId().toString(), event);
 		return save.getOrderId();
 
 	}

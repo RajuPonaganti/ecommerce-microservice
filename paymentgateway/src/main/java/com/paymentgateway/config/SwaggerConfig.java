@@ -6,6 +6,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -72,6 +73,19 @@ public class SwaggerConfig {
                 .externalDocs(new ExternalDocumentation()
                         .description("Payment Gateway Integration Guide")
                         .url("https://paymentgateway.com/docs"))
-                .components(new Components());
+                .components(new Components()
+                        // Register X-Api-Key header scheme
+                        .addSecuritySchemes("ApiKeyAuth", new SecurityScheme()
+                                .type(SecurityScheme.Type.APIKEY)
+                                .in(SecurityScheme.In.HEADER)
+                                .name("X-Api-Key")
+                                .description("Merchant API Key — e.g. pgw_test_ecomm_abc123xyz789"))
+                        // Register X-Api-Secret header scheme
+                        .addSecuritySchemes("ApiSecretAuth", new SecurityScheme()
+                                .type(SecurityScheme.Type.APIKEY)
+                                .in(SecurityScheme.In.HEADER)
+                                .name("X-Api-Secret")
+                                .description("Merchant API Secret — e.g. ecomm_secret_do_not_use_in_prod"))
+                );
     }
 }

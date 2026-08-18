@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record OrderCreatedEvent(UUID eventId, UUID orderId, Instant occurrredAt, List<OrderItemDetailDTO> items,
 		BigDecimal finalAmount, UUID userId) {
-	
 
 	@JsonCreator
 	public OrderCreatedEvent(@JsonProperty("eventId") UUID eventId, @JsonProperty("orderId") UUID orderId,
@@ -23,10 +22,6 @@ public record OrderCreatedEvent(UUID eventId, UUID orderId, Instant occurrredAt,
 		this.items = items;
 		this.finalAmount = finalAmount;
 		this.userId = userId;
-	}
-
-	public OrderCreatedEvent(UUID orderId, List<OrderItemDetailDTO> items, BigDecimal finalAmount, UUID userId) {
-		this(UUID.randomUUID(), orderId, Instant.now(), items, finalAmount, userId);
 	}
 
 }

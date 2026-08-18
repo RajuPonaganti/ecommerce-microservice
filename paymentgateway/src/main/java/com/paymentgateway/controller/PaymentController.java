@@ -8,12 +8,16 @@ import com.paymentgateway.dto.response.ValidationAuditResponse;
 import com.paymentgateway.model.entity.ValidationAudit;
 import com.paymentgateway.service.PaymentService;
 import com.paymentgateway.service.validation.ValidationAuditService;
+import com.paymentgateway.model.entity.MerchantCredentials;
+import com.paymentgateway.security.ApiKeyAuthFilter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -78,8 +82,19 @@ public class PaymentController {
     })
     @PostMapping("/initiate")
     public ResponseEntity<ApiResponse<PaymentResponse>> initiatePayment(
-            @Valid @RequestBody InitiatePaymentRequest request) {
-        log.info("POST /initiate | orderId={} | mode={}", request.getOrderId(), request.getPaymentMode());
+            @Valid @RequestBody InitiatePaymentRequest request,
+            HttpServletRequest httpRequest) {
+
+        MerchantCredentials merchant =
+                (MerchantCredentials) httpRequest.getAttribute(ApiKeyAuthFilter.ATTR_MERCHANT);
+
+        log.info("POST /initiate | orderId={} | mode={} | merchant={} | connectTimeout={}ms | readTimeout={}ms",
+                request.getOrderId(),
+                request.getPaymentMode(),
+                merchant != null ? merchant.getMerchantId() : "unknown",
+                merchant != null ? merchant.getConnectTimeoutMs() : "-",
+                merchant != null ? merchant.getReadTimeoutMs() : "-");
+
         PaymentResponse response = paymentService.initiatePayment(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(response, response.getMessage()));
@@ -110,8 +125,16 @@ public class PaymentController {
     })
     @PostMapping("/verify")
     public ResponseEntity<ApiResponse<PaymentResponse>> verifyPayment(
-            @Valid @RequestBody VerifyPaymentRequest request) {
-        log.info("POST /verify | txnId={}", request.getTransactionId());
+            @Valid @RequestBody VerifyPaymentRequest request,
+            HttpServletRequest httpRequest) {
+
+        MerchantCredentials merchant =
+                (MerchantCredentials) httpRequest.getAttribute(ApiKeyAuthFilter.ATTR_MERCHANT);
+
+        log.info("POST /verify | txnId={} | merchant={}",
+                request.getTransactionId(),
+                merchant != null ? merchant.getMerchantId() : "unknown");
+
         PaymentResponse response = paymentService.verifyPayment(request);
         return ResponseEntity.ok(ApiResponse.success(response, response.getMessage()));
     }

@@ -15,7 +15,7 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 import com.ecommerce.order.events.OrderCreatedEventSerializer;
 
 @Configuration
-public class KafkaProducerConfig {
+public class OrderKafkaProducerConfig {
 	@Bean
 	public ProducerFactory<String, Object> producerConfig(){
 		Map<String, Object> map = new HashMap<>();
