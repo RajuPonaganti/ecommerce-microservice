@@ -22,4 +22,24 @@ public interface InventoryRepository extends JpaRepository<Inventory, UUID> {
 	      AND i.quantityAvailable >= :quantity
 	""")
 	int decrementStock(UUID productId, int quantity);
+
+	@Modifying
+	@Query("""
+	    UPDATE Inventory i
+	    SET i.quantityAvailable = i.quantityAvailable + :quantity,
+	        i.quantityReserved  = i.quantityReserved  - :quantity
+	    WHERE i.productId = :productId
+	      AND i.quantityReserved >= :quantity
+	""")
+	int releaseStock(UUID productId, int quantity);
+
+	@Modifying
+	@Query("""
+	    UPDATE Inventory i
+	    SET i.quantityOnHand   = i.quantityOnHand   - :quantity,
+	        i.quantityReserved = i.quantityReserved  - :quantity
+	    WHERE i.productId = :productId
+	      AND i.quantityReserved >= :quantity
+	""")
+	int confirmStock(UUID productId, int quantity);
 }

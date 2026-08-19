@@ -18,7 +18,10 @@ import com.ecommerce.inventory.events.EventName;
 import com.ecommerce.inventory.events.GroupIdName;
 import com.ecommerce.inventory.events.OrderCreatedEvent;
 import com.ecommerce.inventory.events.OrderItemDetailDTO;
+import com.ecommerce.inventory.events.InventoryReleaseRequestedEvent;
 import com.ecommerce.inventory.events.InventoryReservationFailedEvent;
+import com.ecommerce.inventory.events.PaymentCompletedEvent;
+import com.ecommerce.inventory.events.StockConfirmedEvent;
 import com.ecommerce.inventory.events.InventoryReservedEvent;
 import com.ecommerce.inventory.exception.StockNotFoundException;
 import com.ecommerce.inventory.model.Inventory;
@@ -86,7 +89,7 @@ public class InventorySevice {
 
 			// Let @GeneratedValue assign the PK — never set @Id manually on a
 			// @GeneratedValue entity
-			StockReservation sr = StockReservation.builder().expiresAt(Instant.now().plus(2, ChronoUnit.HOURS))
+			StockReservation sr = StockReservation.builder().expiresAt(Instant.now().plus(2, ChronoUnit.DAYS))
 					.orderId(event.orderId()).status(StockReservationStatus.RESERVED).build();
 			List<StockReservationItem> collect = items.stream()
 					.map(e -> StockReservationItem.builder().productId(e.productId()).quantity(e.quantity())
@@ -94,10 +97,14 @@ public class InventorySevice {
 					.collect(Collectors.toList());
 			sr.setStockReservationItemm(collect);
 			StockReservation save = stockReservationRepository.save(sr);
-			InventoryReservedEvent inventoryReservedEvent = new InventoryReservedEvent(UUID.randomUUID(), event.orderId(),
-					Instant.now(), save.getReservationId());
-			KafkaTemplate.send(EventName.INVENTORY_STOCK_RESERVED_EVENT_V1, save.getReservationId().toString(),
-					inventoryReservedEvent);
+			
+			/*
+			 * InventoryReservedEvent inventoryReservedEvent = new
+			 * InventoryReservedEvent(UUID.randomUUID(), event.orderId(), Instant.now(),
+			 * save.getReservationId());
+			 * KafkaTemplate.send(EventName.INVENTORY_STOCK_RESERVED_EVENT_V1,
+			 * save.getReservationId().toString(), inventoryReservedEvent);
+			 */
 
 		} catch (Exception e) {
 			InventoryReservationFailedEvent reservationFailedEvent = new InventoryReservationFailedEvent(UUID.randomUUID(),
@@ -106,5 +113,121 @@ public class InventorySevice {
 					reservationFailedEvent);
 
 		}
+	}
+
+	// ── Compensation: Release stock when payment fails ────────────────────────
+
+	/**
+	 * Compensation saga step: payment failed downstream — release the stock
+	 * we reserved so it becomes available again for other orders.
+	 */
+	@KafkaListener(
+			topics  = EventName.INVENTORY_RELEASE_REQUESTED_V1,
+			groupId = GroupIdName.INVENTORY_SERVICE
+	)
+	@Transactional
+	public void onInventoryReleaseRequested(InventoryReleaseRequestedEvent event) {
+		log.info("InventorySevice: onInventoryReleaseRequested | orderId={}", event.orderId());
+
+		try {
+			// Find the reservation for this order
+			StockReservation reservation = stockReservationRepository
+					.findByOrderId(event.orderId())
+					.orElse(null);
+
+			if (reservation == null) {
+				log.warn("No reservation found for orderId={} — nothing to release", event.orderId());
+				return;
+			}
+
+			// Idempotency: skip if already cancelled/released
+			if (reservation.getStatus() == StockReservationStatus.CANCELLED
+					|| reservation.getStatus() == StockReservationStatus.EXPIRED) {
+				log.warn("Reservation for orderId={} already released (status={})",
+						event.orderId(), reservation.getStatus());
+				return;
+			}
+
+			// Release each item's reserved quantity back to available
+			List<StockReservationItem> items = reservation.getStockReservationItemm();
+			for (StockReservationItem item : items) {
+				int released = InventoryRepository.releaseStock(item.getProductId(), item.getQuantity());
+				if (released == 0) {
+					log.error("Failed to release stock for productId={} qty={}",
+							item.getProductId(), item.getQuantity());
+				} else {
+					log.info("Released {} units for productId={}", item.getQuantity(), item.getProductId());
+				}
+			}
+
+			// Mark reservation as CANCELLED
+			reservation.setStatus(StockReservationStatus.CANCELLED);
+			stockReservationRepository.save(reservation);
+
+			log.info("Inventory released (compensation) for order {}", event.orderId());
+
+		} catch (Exception e) {
+			log.error("Failed to release inventory for order {} during compensation",
+					event.orderId(), e);
+			// In production: retry queue / DLQ rather than swallow
+		}
+	}
+
+	// ── Confirm reservation when payment succeeds ─────────────────────────────
+
+	/**
+	 * Payment succeeded — confirm the reservation.
+	 * Marks reservation as CONFIRMED, decrements quantityOnHand,
+	 * then publishes inventory.stock-confirmed.v1 for downstream services
+	 * (Notification Service, Shipping Service).
+	 */
+	@KafkaListener(
+			topics  = EventName.PAYMENT_COMPLETED_EVENT_V1,
+			groupId = GroupIdName.INVENTORY_SERVICE
+	)
+	@Transactional
+	public void onPaymentCompleted(PaymentCompletedEvent event) {
+		log.info("InventorySevice: onPaymentCompleted | orderId={} | txnId={}",
+				event.orderId(), event.paymentTransactionId());
+
+		StockReservation reservation = stockReservationRepository
+				.findByOrderId(event.orderId())
+				.orElse(null);
+
+		if (reservation == null) {
+			log.warn("No reservation found for orderId={} on payment.completed — skipping",
+					event.orderId());
+			return;
+		}
+
+		// Idempotency — skip if already confirmed
+		if (reservation.getStatus() == StockReservationStatus.CONFIRMED) {
+			log.warn("Reservation for orderId={} already CONFIRMED — skipping", event.orderId());
+			return;
+		}
+
+		// Mark reservation as CONFIRMED
+		reservation.setStatus(StockReservationStatus.CONFIRMED);
+		StockReservation saved = stockReservationRepository.save(reservation);
+
+		// Decrement quantityOnHand (stock physically dispatched) and clear reservation
+		List<StockReservationItem> items = saved.getStockReservationItemm();
+		for (StockReservationItem item : items) {
+			InventoryRepository.confirmStock(item.getProductId(), item.getQuantity());
+		}
+
+		// Publish inventory.stock-confirmed.v1
+		// → Notification Service listens to inform the customer
+		// → Shipping Service listens to create shipment
+		StockConfirmedEvent confirmedEvent = new StockConfirmedEvent(
+				event.orderId(),
+				saved.getReservationId(),
+				event.paymentTransactionId()
+		);
+		KafkaTemplate.send(EventName.INVENTORY_STOCK_CONFIRMED_V1,
+				event.orderId().toString(), confirmedEvent);
+
+		log.info("Stock CONFIRMED | orderId={} | reservationId={}",
+				event.orderId(), saved.getReservationId());
 	}
 }

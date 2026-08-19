@@ -143,13 +143,19 @@ public class PaymentService {
                 .createdAt(Instant.now())
                 .build());
 
-        // Publish payment.failed.v1
-        // → Order Service marks order CANCELLED
-        // → Inventory Service releases reservation (via OrderCancelled event)
+        // 1. Notify Order Service → marks order CANCELLED
         kafkaTemplate.send(
                 EventName.PAYMENT_FAILED_EVENT_V1,
                 orderIdStr,
                 new PaymentFailedEvent(orderId, reason));
+
+        // 2. Notify Inventory Service → releases the stock reservation
+        //    This is the compensation step of the saga:
+        //    order.created → inventory.reserved → payment.failed → inventory.release-requested
+        kafkaTemplate.send(
+                EventName.INVENTORY_RELEASE_REQUESTED_V1,
+                orderIdStr,
+                new InventoryReleaseRequestedEvent(orderId, reason));
 
         log.warn("Payment FAILED | orderId={} | reason={}", orderId, reason);
     }
