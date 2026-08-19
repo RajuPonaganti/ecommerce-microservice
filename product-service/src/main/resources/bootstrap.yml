@@ -12,6 +12,7 @@ spring:
     config:
       uri: http://localhost:8888
       fail-fast: true
+      label: main
       discovery:
         enabled: true
         service-id: config-server

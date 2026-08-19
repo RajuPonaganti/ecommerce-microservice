@@ -10,13 +10,13 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ecommerce.commons.EventName;
+import com.ecommerce.commons.InventoryReservationFailedEvent;
+import com.ecommerce.commons.OrderCreatedEvent;
+import com.ecommerce.commons.OrderItemDetailDTO;
+import com.ecommerce.commons.PaymentFailedEvent;
 import com.ecommerce.order.dtos.OrderCreateReqDTO;
-import com.ecommerce.order.dtos.OrderItemDetailDTO;
 import com.ecommerce.order.enums.OrderStatus;
-import com.ecommerce.order.events.EventName;
-import com.ecommerce.order.events.InventoryReservationFailedEvent;
-import com.ecommerce.order.events.OrderCreatedEvent;
-import com.ecommerce.order.events.PaymentFailedEvent;
 import com.ecommerce.order.model.Order;
 import com.ecommerce.order.model.OrderItem;
 import com.ecommerce.order.repository.OrderRepository;
@@ -53,6 +53,8 @@ public class OrderService {
 		OrderCreatedEvent event = new OrderCreatedEvent(
 				UUID.randomUUID(), save.getOrderId(), Instant.now(),
 				dto.items(), save.getFinalAmount(), save.getUserId());
+		
+		OrderCreatedEvent orderCreatedEvent = new OrderCreatedEvent(UUID.randomUUID(), save.getOrderId(), Instant.now(), dto.items(), save.getFinalAmount(), save.getUserId());
 
 		KafkaTemplate.send(EventName.ORDER_CREATED_EVENT_V1,
 				save.getOrderId().toString(), event);

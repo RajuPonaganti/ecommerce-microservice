@@ -1,4 +1,4 @@
-package com.ecommerce.inventory.events;
+package com.ecommerce.commons;
 /*
  * package com.ecommerce.order.dtos;
  * 

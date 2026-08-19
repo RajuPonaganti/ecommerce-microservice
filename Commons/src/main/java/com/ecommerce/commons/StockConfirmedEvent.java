@@ -1,4 +1,4 @@
-package com.ecommerce.notification.events;
+package com.ecommerce.commons;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -7,8 +7,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Consumed from inventory.stock-confirmed.v1.
- * Published by Inventory Service after payment succeeds and reservation is confirmed.
+ * Published to inventory.stock-confirmed.v1 after payment succeeds.
+ * Consumed by Notification Service to inform the customer.
  */
 public record StockConfirmedEvent(UUID eventId, UUID orderId, UUID reservationId,
                                    String paymentTransactionId, Instant occurredAt) {
@@ -25,5 +25,9 @@ public record StockConfirmedEvent(UUID eventId, UUID orderId, UUID reservationId
         this.reservationId        = reservationId;
         this.paymentTransactionId = paymentTransactionId;
         this.occurredAt           = occurredAt;
+    }
+
+    public StockConfirmedEvent(UUID orderId, UUID reservationId, String paymentTransactionId) {
+        this(UUID.randomUUID(), orderId, reservationId, paymentTransactionId, Instant.now());
     }
 }

@@ -1,16 +1,16 @@
-package com.ecommerce.order.events;
+package com.ecommerce.commons;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import com.ecommerce.order.dtos.OrderItemDetailDTO;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record OrderCreatedEvent(UUID eventId, UUID orderId, Instant occurrredAt, List<OrderItemDetailDTO> items,
 		BigDecimal finalAmount, UUID userId) {
+	
 
 	@JsonCreator
 	public OrderCreatedEvent(@JsonProperty("eventId") UUID eventId, @JsonProperty("orderId") UUID orderId,
@@ -23,5 +23,9 @@ public record OrderCreatedEvent(UUID eventId, UUID orderId, Instant occurrredAt,
 		this.finalAmount = finalAmount;
 		this.userId = userId;
 	}
+
+
+
+	
 
 }

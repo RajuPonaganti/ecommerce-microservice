@@ -4,5 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
+import com.ecommerce.commons.OrderItemDetailDTO;
+
 public record OrderCreateRespDTO(UUID userId, List<OrderItemDetailDTO> items, BigDecimal totalAmount) {
 }

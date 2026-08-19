@@ -1,43 +1,51 @@
 package com.ecommerce.payment.service;
 
-import com.ecommerce.payment.client.PaymentGatewayClient;
-import com.ecommerce.payment.dtos.GatewayApiResponse;
-import com.ecommerce.payment.dtos.GatewayInitiateRequest;
-import com.ecommerce.payment.events.*;
-import com.ecommerce.payment.model.Payment;
-import com.ecommerce.payment.model.PaymentStatus;
-import com.ecommerce.payment.repository.PaymentRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.time.Instant;
+import com.ecommerce.commons.EventName;
+import com.ecommerce.commons.GroupIdName;
+import com.ecommerce.commons.InventoryReleaseRequestedEvent;
+import com.ecommerce.commons.InventoryReservedEvent;
+import com.ecommerce.commons.PaymentCompletedEvent;
+import com.ecommerce.commons.PaymentFailedEvent;
+import com.ecommerce.payment.client.PaymentGatewayClient;
+import com.ecommerce.payment.dtos.GatewayApiResponse;
+import com.ecommerce.payment.dtos.GatewayInitiateRequest;
+import com.ecommerce.payment.model.Payment;
+import com.ecommerce.payment.model.PaymentStatus;
+import com.ecommerce.payment.repository.PaymentRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
 
-    private final PaymentRepository      paymentRepository;
-    private final PaymentGatewayClient   gatewayClient;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+	private final PaymentRepository paymentRepository;
+	private final PaymentGatewayClient gatewayClient;
+	private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    // Injected from bootstrap.yml / Config Server
-    @Value("${payment.gateway.api-key}")
-    private String gatewayApiKey;
+	// Injected from bootstrap.yml / Config Server
+	@Value("${payment.gateway.api-key}")
+	private String gatewayApiKey;
 
-    @Value("${payment.gateway.api-secret}")
-    private String gatewayApiSecret;
+	@Value("${payment.gateway.api-secret}")
+	private String gatewayApiSecret;
 
-    @Value("${payment.gateway.merchant-id:MERCH_ECOMM_001}")
-    private String merchantId;
+	@Value("${payment.gateway.merchant-id:MERCH_ECOMM_001}")
+	private String merchantId;
 
-    /**
+	/**
      * Listens for inventory.stock-reserved.v1.
      * When inventory is reserved for an order, this triggers the payment charge.
      *
@@ -108,8 +116,8 @@ public class PaymentService {
                 kafkaTemplate.send(
                         EventName.PAYMENT_COMPLETED_EVENT_V1,
                         event.orderId().toString(),
-                        new PaymentCompletedEvent(
-                                event.orderId(),
+                        new PaymentCompletedEvent(UUID.randomUUID(),
+                                event.orderId(),Instant.now(),
                                 transactionId
                         ));
 
@@ -131,32 +139,24 @@ public class PaymentService {
         }
     }
 
-    // ── helpers ───────────────────────────────────────────────────────────────
+	// ── helpers ───────────────────────────────────────────────────────────────
 
-    private void handleFailure(String orderIdStr, String reason) {
-        java.util.UUID orderId = java.util.UUID.fromString(orderIdStr);
+	private void handleFailure(String orderIdStr, String reason) {
+		java.util.UUID orderId = java.util.UUID.fromString(orderIdStr);
 
-        paymentRepository.save(Payment.builder()
-                .orderId(orderId)
-                .status(PaymentStatus.FAILED)
-                .failureReason(reason)
-                .createdAt(Instant.now())
-                .build());
+		paymentRepository.save(Payment.builder().orderId(orderId).status(PaymentStatus.FAILED).failureReason(reason)
+				.createdAt(Instant.now()).build());
 
-        // 1. Notify Order Service → marks order CANCELLED
-        kafkaTemplate.send(
-                EventName.PAYMENT_FAILED_EVENT_V1,
-                orderIdStr,
-                new PaymentFailedEvent(orderId, reason));
+		// 1. Notify Order Service → marks order CANCELLED
+		kafkaTemplate.send(EventName.PAYMENT_FAILED_EVENT_V1, orderIdStr, new PaymentFailedEvent(UUID.randomUUID(), orderId, Instant.now(),reason));
 
-        // 2. Notify Inventory Service → releases the stock reservation
-        //    This is the compensation step of the saga:
-        //    order.created → inventory.reserved → payment.failed → inventory.release-requested
-        kafkaTemplate.send(
-                EventName.INVENTORY_RELEASE_REQUESTED_V1,
-                orderIdStr,
-                new InventoryReleaseRequestedEvent(orderId, reason));
+		// 2. Notify Inventory Service → releases the stock reservation
+		// This is the compensation step of the saga:
+		// order.created → inventory.reserved → payment.failed →
+		// inventory.release-requested
+		kafkaTemplate.send(EventName.INVENTORY_RELEASE_REQUESTED_V1, orderIdStr,
+				new InventoryReleaseRequestedEvent(orderId, reason));
 
-        log.warn("Payment FAILED | orderId={} | reason={}", orderId, reason);
-    }
+		log.warn("Payment FAILED | orderId={} | reason={}", orderId, reason);
+	}
 }

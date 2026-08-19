@@ -1,4 +1,4 @@
-package com.ecommerce.inventory.events;
+package com.ecommerce.commons;
 
 public class GroupIdName {
 	public static final String INVENTORY_SERVICE = "inventory-service";

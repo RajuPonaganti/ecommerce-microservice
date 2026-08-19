@@ -1,20 +1,21 @@
 package com.ecommerce.notification.service;
 
-import com.ecommerce.notification.dispatcher.EmailDispatcher;
-import com.ecommerce.notification.dispatcher.SmsDispatcher;
-import com.ecommerce.notification.events.OrderConfirmedEvent;
-import com.ecommerce.notification.events.PaymentCompletedEvent;
-import com.ecommerce.notification.events.StockConfirmedEvent;
-import com.ecommerce.notification.model.NotificationLog;
-import com.ecommerce.notification.model.NotificationStatus;
-import com.ecommerce.notification.repository.NotificationLogRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.Instant;
+
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
+import com.ecommerce.commons.PaymentCompletedEvent;
+import com.ecommerce.commons.StockConfirmedEvent;
+import com.ecommerce.notification.dispatcher.EmailDispatcher;
+import com.ecommerce.notification.dispatcher.SmsDispatcher;
+import com.ecommerce.notification.model.NotificationLog;
+import com.ecommerce.notification.model.NotificationStatus;
+import com.ecommerce.notification.repository.NotificationLogRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Kafka consumer — listens to domain events and dispatches

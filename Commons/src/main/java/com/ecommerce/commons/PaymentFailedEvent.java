@@ -1,4 +1,4 @@
-package com.ecommerce.order.events;
+package com.ecommerce.commons;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -6,10 +6,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.util.UUID;
 
-public record InventoryReservationFailedEvent(UUID eventId, UUID orderId, Instant occurredAt, String reason) {
+public record PaymentFailedEvent(UUID eventId, UUID orderId, Instant occurredAt, String reason) {
 
     @JsonCreator
-    public InventoryReservationFailedEvent(
+    public PaymentFailedEvent(
             @JsonProperty("eventId")    UUID eventId,
             @JsonProperty("orderId")    UUID orderId,
             @JsonProperty("occurredAt") Instant occurredAt,

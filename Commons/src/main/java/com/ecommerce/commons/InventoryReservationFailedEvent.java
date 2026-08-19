@@ -1,4 +1,4 @@
-package com.ecommerce.inventory.events;
+package com.ecommerce.commons;
 
 import java.time.Instant;
 import java.util.UUID;

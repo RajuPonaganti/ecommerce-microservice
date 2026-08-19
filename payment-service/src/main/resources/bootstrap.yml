@@ -2,8 +2,6 @@ server:
   port: 8087
 
 spring:
-  config:
-    import: "configserver:"
   profiles:
     active: dev
   application:
@@ -11,8 +9,46 @@ spring:
   cloud:
     config:
       uri: http://localhost:8888
-      fail-fast: true
+      fail-fast: false        # don't crash if config-server is unavailable locally
+      label: main
       discovery:
         enabled: true
         service-id: config-server
 
+  datasource:
+    url: jdbc:postgresql://localhost:5432/payment_service_db
+    username: postgres
+    password: root
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        retries: 2147483647
+        max.in.flight.requests.per.connection: 5
+        spring.json.add.type.headers: true
+    consumer:
+      group-id: payment-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.ecommerce.payment.events"
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: com.fasterxml.jackson.databind.JsonNode
+
+# Payment gateway test credentials (seeded by MerchantCredentialsSeeder)
+payment:
+  gateway:
+    api-key: pgw_test_ecomm_abc123xyz789
+    api-secret: ecomm_secret_do_not_use_in_prod
+    merchant-id: MERCH_ECOMM_001
