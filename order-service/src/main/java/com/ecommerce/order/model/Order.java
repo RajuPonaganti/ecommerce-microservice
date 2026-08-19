@@ -56,6 +56,7 @@ public class Order {
     private String couponCode;
     private String paymentRef;
 
+    @Builder.Default
     private Instant createdAt = Instant.now();
     
 	@Version

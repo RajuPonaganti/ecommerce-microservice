@@ -1,0 +1,1 @@
+2026-08-20 00:16:56.339 [http-nio-8083-exec-5] INFO  [order-service] c.e.order.service.OrderService - OrderService.createOrder() | userId=512dbc3c-34fb-4b4a-b193-ccdba9800058 | itemCount=1 | totalAmount=50000

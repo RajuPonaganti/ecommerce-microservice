@@ -16,6 +16,7 @@ import com.ecommerce.commons.EventName;
 import com.ecommerce.commons.GroupIdName;
 import com.ecommerce.commons.InventoryReleaseRequestedEvent;
 import com.ecommerce.commons.InventoryReservationFailedEvent;
+import com.ecommerce.commons.InventoryReservedEvent;
 import com.ecommerce.commons.OrderCreatedEvent;
 import com.ecommerce.commons.OrderItemDetailDTO;
 import com.ecommerce.commons.PaymentCompletedEvent;
@@ -37,196 +38,179 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class InventorySevice {
+
 	private final StockReservationRepository stockReservationRepository;
-
 	private final InventoryRepository InventoryRepository;
-
 	private final KafkaTemplate<String, Object> KafkaTemplate;
 
-	public ResponseEntity<InventoryDTO> addInventory(InventoryDTO dto) {
-		log.info("InventorySevice : addInventory (dto, productId) {} ", dto);
+	// ── Add inventory ─────────────────────────────────────────────────────────
 
-		Inventory inventory = Inventory.builder().productId(dto.getProductId()).waeHouseId(dto.getWaeHouseId())
-				.quantityOnHand(dto.getQuantityOnHand()).quantityReserved(0).quantityAvailable(dto.getQuantityOnHand())
+	public ResponseEntity<InventoryDTO> addInventory(InventoryDTO dto) {
+		log.info("InventorySevice.addInventory() | productId={} | qty={}", dto.getProductId(), dto.getQuantityOnHand());
+
+		Inventory inventory = Inventory.builder()
+				.productId(dto.getProductId())
+				.waeHouseId(dto.getWaeHouseId())
+				.quantityOnHand(dto.getQuantityOnHand())
+				.quantityReserved(0)
+				.quantityAvailable(dto.getQuantityOnHand())
 				.build();
 
 		Inventory saved = InventoryRepository.save(inventory);
+		log.info("InventorySevice.addInventory() | saved | stockItemId={}", saved.getStockItemId());
 
 		InventoryDTO response = new InventoryDTO();
 		response.setProductId(saved.getProductId());
 		response.setWaeHouseId(saved.getWaeHouseId());
 		response.setQuantityOnHand(saved.getQuantityOnHand());
-
 		return ResponseEntity.ok(response);
 	}
 
+	// ── Check availability ────────────────────────────────────────────────────
+
 	public ResponseEntity<InventoryAvailabilityDTO> getAvailability(UUID productId, int requiredQuantity) {
-		log.info("InventorySevice : getAvailability (productId, requiredQuantity) {} {}", productId, requiredQuantity);
+		log.debug("InventorySevice.getAvailability() | productId={} | required={}", productId, requiredQuantity);
 
-		Inventory Inventory = InventoryRepository.findByProductId(productId)
-				.orElseThrow(() -> new StockNotFoundException("Stock not found for productId: " + productId));
+		Inventory inventory = InventoryRepository.findByProductId(productId)
+				.orElseThrow(() -> {
+					log.error("InventorySevice.getAvailability() | not found | productId={}", productId);
+					return new StockNotFoundException("Stock not found for productId: " + productId);
+				});
 
-		int available = Inventory.getAvailableQuantity();
+		int available = inventory.getAvailableQuantity();
+		boolean canOrder = available >= requiredQuantity;
+		log.debug("InventorySevice.getAvailability() | available={} | required={} | canOrder={}", available, requiredQuantity, canOrder);
 
-		return ResponseEntity.ok(
-				new InventoryAvailabilityDTO(productId, available, requiredQuantity, available >= requiredQuantity));
+		return ResponseEntity.ok(new InventoryAvailabilityDTO(productId, available, requiredQuantity, canOrder));
 	}
+
+	// ── Kafka: OrderCreated → reserve stock ───────────────────────────────────
 
 	@KafkaListener(topics = EventName.ORDER_CREATED_EVENT_V1, groupId = GroupIdName.INVENTORY_SERVICE)
 	@Transactional
 	public void onOrderCreatedEvent(OrderCreatedEvent event) {
-		try {
-			if (stockReservationRepository.existsByOrderId(event.orderId()))
-				return;
-			List<OrderItemDetailDTO> items = event.items();
+		log.info("InventorySevice.onOrderCreatedEvent() | orderId={} | itemCount={}", event.orderId(), event.items().size());
 
-			for (OrderItemDetailDTO item : items) {
-				int decrementStock = InventoryRepository.decrementStock(item.productId(), item.quantity());
-				if (decrementStock == 0)
-					throw new RuntimeException("stock is not present");
+		try {
+			if (stockReservationRepository.existsByOrderId(event.orderId())) {
+				log.warn("InventorySevice.onOrderCreatedEvent() | duplicate event — skipping | orderId={}", event.orderId());
+				return;
 			}
 
-			// Let @GeneratedValue assign the PK — never set @Id manually on a
-			// @GeneratedValue entity
-			StockReservation sr = StockReservation.builder().expiresAt(Instant.now().plus(2, ChronoUnit.DAYS))
-					.orderId(event.orderId()).status(StockReservationStatus.RESERVED).build();
+			List<OrderItemDetailDTO> items = event.items();
+			for (OrderItemDetailDTO item : items) {
+				log.debug("InventorySevice.onOrderCreatedEvent() | decrementing stock | productId={} | qty={}", item.productId(), item.quantity());
+				int decrementStock = InventoryRepository.decrementStock(item.productId(), item.quantity());
+				if (decrementStock == 0) {
+					log.warn("InventorySevice.onOrderCreatedEvent() | insufficient stock | productId={}", item.productId());
+					throw new RuntimeException("stock is not present for productId: " + item.productId());
+				}
+			}
+
+			StockReservation sr = StockReservation.builder()
+					.expiresAt(Instant.now().plus(2, ChronoUnit.DAYS))
+					.orderId(event.orderId())
+					.status(StockReservationStatus.RESERVED)
+					.build();
+
 			List<StockReservationItem> collect = items.stream()
-					.map(e -> StockReservationItem.builder().productId(e.productId()).quantity(e.quantity())
-							.sellerId(e.sellerId()).sku(e.sku()).stockReservation(sr).build())
+					.map(e -> StockReservationItem.builder()
+							.productId(e.productId()).quantity(e.quantity())
+							.sellerId(e.sellerId()).sku(e.sku())
+							.stockReservation(sr).build())
 					.collect(Collectors.toList());
 			sr.setStockReservationItemm(collect);
 			StockReservation save = stockReservationRepository.save(sr);
-			
-			/*
-			 * InventoryReservedEvent inventoryReservedEvent = new
-			 * InventoryReservedEvent(UUID.randomUUID(), event.orderId(), Instant.now(),
-			 * save.getReservationId());
-			 * KafkaTemplate.send(EventName.INVENTORY_STOCK_RESERVED_EVENT_V1,
-			 * save.getReservationId().toString(), inventoryReservedEvent);
-			 */
 
+			log.info("InventorySevice.onOrderCreatedEvent() | stock reserved | orderId={} | reservationId={}",
+					event.orderId(), save.getReservationId());
+
+			InventoryReservedEvent eventr = new InventoryReservedEvent(UUID.randomUUID(), event.orderId(), Instant.now(), save.getReservationId());
+			KafkaTemplate.send(EventName.INVENTORY_STOCK_RESERVED_EVENT_V1,
+					event.orderId().toString(), eventr);
 		} catch (Exception e) {
-			InventoryReservationFailedEvent reservationFailedEvent = new InventoryReservationFailedEvent(UUID.randomUUID(),
-					event.orderId(), Instant.now(), e.getMessage());
-			KafkaTemplate.send(EventName.INVENTORY_STOCK_RESERVED_FAILED_EVENT_V1, event.orderId().toString(),
-					reservationFailedEvent);
-
+			log.error("InventorySevice.onOrderCreatedEvent() | reservation failed | orderId={} | reason={}",
+					event.orderId(), e.getMessage());
+			InventoryReservationFailedEvent failedEvent = new InventoryReservationFailedEvent(
+					UUID.randomUUID(), event.orderId(), Instant.now(), e.getMessage());
+			KafkaTemplate.send(EventName.INVENTORY_STOCK_RESERVED_FAILED_EVENT_V1,
+					event.orderId().toString(), failedEvent);
 		}
 	}
 
-	// ── Compensation: Release stock when payment fails ────────────────────────
+	// ── Kafka: PaymentFailed → release stock (compensation) ──────────────────
 
-	/**
-	 * Compensation saga step: payment failed downstream — release the stock
-	 * we reserved so it becomes available again for other orders.
-	 */
-	@KafkaListener(
-			topics  = EventName.INVENTORY_RELEASE_REQUESTED_V1,
-			groupId = GroupIdName.INVENTORY_SERVICE
-	)
+	@KafkaListener(topics = EventName.INVENTORY_RELEASE_REQUESTED_V1, groupId = GroupIdName.INVENTORY_SERVICE)
 	@Transactional
 	public void onInventoryReleaseRequested(InventoryReleaseRequestedEvent event) {
-		log.info("InventorySevice: onInventoryReleaseRequested | orderId={}", event.orderId());
+		log.info("InventorySevice.onInventoryReleaseRequested() | orderId={} | reason={}", event.orderId(), event.reason());
 
 		try {
-			// Find the reservation for this order
-			StockReservation reservation = stockReservationRepository
-					.findByOrderId(event.orderId())
-					.orElse(null);
+			StockReservation reservation = stockReservationRepository.findByOrderId(event.orderId()).orElse(null);
 
 			if (reservation == null) {
-				log.warn("No reservation found for orderId={} — nothing to release", event.orderId());
+				log.warn("InventorySevice.onInventoryReleaseRequested() | no reservation found | orderId={}", event.orderId());
 				return;
 			}
 
-			// Idempotency: skip if already cancelled/released
 			if (reservation.getStatus() == StockReservationStatus.CANCELLED
 					|| reservation.getStatus() == StockReservationStatus.EXPIRED) {
-				log.warn("Reservation for orderId={} already released (status={})",
-						event.orderId(), reservation.getStatus());
+				log.warn("InventorySevice.onInventoryReleaseRequested() | already released | orderId={} | status={}", event.orderId(), reservation.getStatus());
 				return;
 			}
 
-			// Release each item's reserved quantity back to available
 			List<StockReservationItem> items = reservation.getStockReservationItemm();
 			for (StockReservationItem item : items) {
 				int released = InventoryRepository.releaseStock(item.getProductId(), item.getQuantity());
 				if (released == 0) {
-					log.error("Failed to release stock for productId={} qty={}",
-							item.getProductId(), item.getQuantity());
+					log.error("InventorySevice.onInventoryReleaseRequested() | release failed | productId={} qty={}", item.getProductId(), item.getQuantity());
 				} else {
-					log.info("Released {} units for productId={}", item.getQuantity(), item.getProductId());
+					log.info("InventorySevice.onInventoryReleaseRequested() | released {} units | productId={}", item.getQuantity(), item.getProductId());
 				}
 			}
 
-			// Mark reservation as CANCELLED
 			reservation.setStatus(StockReservationStatus.CANCELLED);
 			stockReservationRepository.save(reservation);
-
-			log.info("Inventory released (compensation) for order {}", event.orderId());
+			log.info("InventorySevice.onInventoryReleaseRequested() | stock released | orderId={}", event.orderId());
 
 		} catch (Exception e) {
-			log.error("Failed to release inventory for order {} during compensation",
-					event.orderId(), e);
-			// In production: retry queue / DLQ rather than swallow
+			log.error("InventorySevice.onInventoryReleaseRequested() | error during release | orderId={}", event.orderId(), e);
 		}
 	}
 
-	// ── Confirm reservation when payment succeeds ─────────────────────────────
+	// ── Kafka: PaymentCompleted → confirm reservation ─────────────────────────
 
-	/**
-	 * Payment succeeded — confirm the reservation.
-	 * Marks reservation as CONFIRMED, decrements quantityOnHand,
-	 * then publishes inventory.stock-confirmed.v1 for downstream services
-	 * (Notification Service, Shipping Service).
-	 */
-	@KafkaListener(
-			topics  = EventName.PAYMENT_COMPLETED_EVENT_V1,
-			groupId = GroupIdName.INVENTORY_SERVICE
-	)
+	@KafkaListener(topics = EventName.PAYMENT_COMPLETED_EVENT_V1, groupId = GroupIdName.INVENTORY_SERVICE)
 	@Transactional
 	public void onPaymentCompleted(PaymentCompletedEvent event) {
-		log.info("InventorySevice: onPaymentCompleted | orderId={} | txnId={}",
-				event.orderId(), event.paymentTransactionId());
+		log.info("InventorySevice.onPaymentCompleted() | orderId={} | txnId={}", event.orderId(), event.paymentTransactionId());
 
-		StockReservation reservation = stockReservationRepository
-				.findByOrderId(event.orderId())
-				.orElse(null);
+		StockReservation reservation = stockReservationRepository.findByOrderId(event.orderId()).orElse(null);
 
 		if (reservation == null) {
-			log.warn("No reservation found for orderId={} on payment.completed — skipping",
-					event.orderId());
+			log.warn("InventorySevice.onPaymentCompleted() | no reservation | orderId={}", event.orderId());
 			return;
 		}
 
-		// Idempotency — skip if already confirmed
 		if (reservation.getStatus() == StockReservationStatus.CONFIRMED) {
-			log.warn("Reservation for orderId={} already CONFIRMED — skipping", event.orderId());
+			log.warn("InventorySevice.onPaymentCompleted() | already confirmed | orderId={}", event.orderId());
 			return;
 		}
 
-		// Mark reservation as CONFIRMED
 		reservation.setStatus(StockReservationStatus.CONFIRMED);
 		StockReservation saved = stockReservationRepository.save(reservation);
 
-		// Decrement quantityOnHand (stock physically dispatched) and clear reservation
 		List<StockReservationItem> items = saved.getStockReservationItemm();
 		for (StockReservationItem item : items) {
+			log.debug("InventorySevice.onPaymentCompleted() | confirming stock | productId={} qty={}", item.getProductId(), item.getQuantity());
 			InventoryRepository.confirmStock(item.getProductId(), item.getQuantity());
 		}
 
-		// Publish inventory.stock-confirmed.v1
-		// → Notification Service listens to inform the customer
-		// → Shipping Service listens to create shipment
 		StockConfirmedEvent confirmedEvent = new StockConfirmedEvent(
-				event.orderId(),
-				saved.getReservationId(),
-				event.paymentTransactionId()
-		);
-		KafkaTemplate.send(EventName.INVENTORY_STOCK_CONFIRMED_V1,
-				event.orderId().toString(), confirmedEvent);
+				event.orderId(), saved.getReservationId(), event.paymentTransactionId());
+		KafkaTemplate.send(EventName.INVENTORY_STOCK_CONFIRMED_V1, event.orderId().toString(), confirmedEvent);
 
-		log.info("Stock CONFIRMED | orderId={} | reservationId={}",
+		log.info("InventorySevice.onPaymentCompleted() | stock confirmed | orderId={} | reservationId={}",
 				event.orderId(), saved.getReservationId());
 	}
 }

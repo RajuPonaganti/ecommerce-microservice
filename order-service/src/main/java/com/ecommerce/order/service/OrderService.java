@@ -36,6 +36,8 @@ public class OrderService {
 
 	@Transactional
 	public UUID createOrder(OrderCreateReqDTO dto) {
+		log.info("OrderService.createOrder() | userId={} | itemCount={} | totalAmount={}",
+				dto.userId(), dto.items().size(), dto.totalAmount());
 		Order order = Order.builder()
 				.userId(dto.userId())
 				.status(OrderStatus.CREATED)
@@ -59,6 +61,7 @@ public class OrderService {
 		KafkaTemplate.send(EventName.ORDER_CREATED_EVENT_V1,
 				save.getOrderId().toString(), event);
 
+		log.info("OrderService.createOrder() | order created | orderId={} | status=CREATED", save.getOrderId());
 		return save.getOrderId();
 	}
 

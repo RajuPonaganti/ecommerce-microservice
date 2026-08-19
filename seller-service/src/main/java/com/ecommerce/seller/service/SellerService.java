@@ -21,7 +21,8 @@ public class SellerService {
 	private final ISellerRepository sellerRepository;
 
 	public SellerDTO saveSeller(final SellerDTO dto) {
-		log.info("SellerService: saveSeller (dto)" + dto);
+		log.info("SellerService.saveSeller() | legalName={} | gstin={}", dto.getLegalName(), dto.getGstin());
+
 		BankAccountDetailsDTO baDetails = dto.getBaDetails();
 
 		final Seller seller = Seller.builder()
@@ -45,6 +46,8 @@ public class SellerService {
 
 		Seller save = sellerRepository.save(seller);
 		dto.setSellerId(save.getSellerId());
+
+		log.info("SellerService.saveSeller() | seller created | sellerId={} | status=PENDING_KYC", save.getSellerId());
 		return dto;
 	}
 }

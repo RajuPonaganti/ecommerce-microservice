@@ -1,0 +1,35 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/inventory_service_db
+    username: postgres
+    password: root
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        retries: 2147483647
+        max.in.flight.requests.per.connection: 5
+        spring.json.add.type.headers: true
+
+    consumer:
+      group-id: inventory-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # JsonDeserializer reads __TypeId__ header and resolves the correct class
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        # Trust the commons package — all shared events live there
+        spring.json.trusted.packages: "com.ecommerce.commons,com.ecommerce.inventory.events"
+        # Use __TypeId__ header written by the producer to pick the right class
+        spring.json.use.type.headers: true

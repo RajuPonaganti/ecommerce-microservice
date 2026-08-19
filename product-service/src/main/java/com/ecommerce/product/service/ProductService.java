@@ -16,15 +16,19 @@ import com.ecommerce.product.model.ProductStatus;
 import com.ecommerce.product.repository.ProductRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductService {
 
 	private final ProductRepository productRepository;
 
 	@Transactional
 	public ProductDto createProduct(ProductCreateDto dto, UUID sellerId) {
+		log.info("ProductService.createProduct() | sellerId={} | sku={}", sellerId, dto.getSku());
+
 		Product product = new Product();
 		product.setTitle(dto.getTitle());
 		product.setDescription(dto.getDescription());
@@ -38,47 +42,58 @@ public class ProductService {
 		product.setSellerId(sellerId);
 		product.setStatus(ProductStatus.DRAFT);
 		product.setCreatedAt(Instant.now());
-		return toDto(productRepository.save(product));
+
+		ProductDto result = toDto(productRepository.save(product));
+		log.info("ProductService.createProduct() | created | productId={}", result.getProductId());
+		return result;
 	}
 
 	@Transactional(readOnly = true)
 	public ProductDto getProduct(UUID productId) {
-		return productRepository.findById(productId).map(this::toDto)
-				.orElseThrow(() -> new ProductNotFoundException(productId));
+		log.debug("ProductService.getProduct() | productId={}", productId);
+		return productRepository.findById(productId).map(p -> {
+			log.debug("ProductService.getProduct() | found | title={}", p.getTitle());
+			return toDto(p);
+		}).orElseThrow(() -> {
+			log.error("ProductService.getProduct() | not found | productId={}", productId);
+			return new ProductNotFoundException(productId);
+		});
 	}
 
 	@Transactional
 	public ProductDto updateProduct(UUID productId, ProductUpdateDto dto, UUID sellerId) {
+		log.info("ProductService.updateProduct() | productId={} | sellerId={}", productId, sellerId);
+
 		Product product = productRepository.findById(productId)
-				.orElseThrow(() -> new ProductNotFoundException(productId));
+				.orElseThrow(() -> {
+					log.error("ProductService.updateProduct() | not found | productId={}", productId);
+					return new ProductNotFoundException(productId);
+				});
 
 		if (!product.getSellerId().equals(sellerId)) {
+			log.warn("ProductService.updateProduct() | access denied | productId={} | sellerId={}", productId, sellerId);
 			throw new ProductAccessDeniedException(productId, sellerId);
 		}
 
-		if (dto.getTitle() != null)
-			product.setTitle(dto.getTitle());
-		if (dto.getDescription() != null)
-			product.setDescription(dto.getDescription());
-		if (dto.getBrand() != null)
-			product.setBrand(dto.getBrand());
-		if (dto.getPrice() != null)
-			product.setPrice(dto.getPrice());
-		if (dto.getMrp() != null)
-			product.setMrp(dto.getMrp());
-		if (dto.getCurrency() != null)
-			product.setCurrency(dto.getCurrency());
-		if (dto.getCategory() != null)
-			product.setCategory(dto.getCategory());
-		if (dto.getAttributes() != null)
-			product.setAttributes(dto.getAttributes());
+		if (dto.getTitle() != null)       product.setTitle(dto.getTitle());
+		if (dto.getDescription() != null) product.setDescription(dto.getDescription());
+		if (dto.getBrand() != null)       product.setBrand(dto.getBrand());
+		if (dto.getPrice() != null)       product.setPrice(dto.getPrice());
+		if (dto.getMrp() != null)         product.setMrp(dto.getMrp());
+		if (dto.getCurrency() != null)    product.setCurrency(dto.getCurrency());
+		if (dto.getCategory() != null)    product.setCategory(dto.getCategory());
+		if (dto.getAttributes() != null)  product.setAttributes(dto.getAttributes());
 		product.setUpdatedAt(Instant.now());
 
-		return toDto(productRepository.save(product));
+		ProductDto result = toDto(productRepository.save(product));
+		log.info("ProductService.updateProduct() | updated | productId={}", productId);
+		return result;
 	}
 
 	@Transactional(readOnly = true)
 	public Page<ProductDto> listProducts(String category, String brand, Pageable pageable) {
+		log.debug("ProductService.listProducts() | category={} | brand={} | page={}", category, brand, pageable.getPageNumber());
+
 		Page<Product> page;
 		if (category != null && brand != null) {
 			page = productRepository.findByCategoryAndBrand(category, brand, pageable);
@@ -89,21 +104,31 @@ public class ProductService {
 		} else {
 			page = productRepository.findAll(pageable);
 		}
+
+		log.debug("ProductService.listProducts() | returned {} products", page.getTotalElements());
 		return page.map(this::toDto);
 	}
 
 	@Transactional
 	public ProductDto publishProduct(UUID productId, UUID sellerId) {
+		log.info("ProductService.publishProduct() | productId={} | sellerId={}", productId, sellerId);
+
 		Product product = productRepository.findById(productId)
-				.orElseThrow(() -> new ProductNotFoundException(productId));
+				.orElseThrow(() -> {
+					log.error("ProductService.publishProduct() | not found | productId={}", productId);
+					return new ProductNotFoundException(productId);
+				});
 
 		if (!product.getSellerId().equals(sellerId)) {
+			log.warn("ProductService.publishProduct() | access denied | productId={} | sellerId={}", productId, sellerId);
 			throw new ProductAccessDeniedException(productId, sellerId);
 		}
 
 		product.setStatus(ProductStatus.ACTIVE);
 		product.setUpdatedAt(Instant.now());
-		return toDto(productRepository.save(product));
+		ProductDto result = toDto(productRepository.save(product));
+		log.info("ProductService.publishProduct() | published | productId={}", productId);
+		return result;
 	}
 
 	private ProductDto toDto(Product p) {
@@ -125,8 +150,6 @@ public class ProductService {
 		dto.setVersion(p.getVersion());
 		return dto;
 	}
-
-	// --- Inline exceptions (no extra files) ---
 
 	public static class ProductNotFoundException extends RuntimeException {
 		public ProductNotFoundException(UUID productId) {
