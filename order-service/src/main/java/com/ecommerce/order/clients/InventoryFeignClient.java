@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.ecommerce.order.dtos.InventoryAvailabilityDTO;
+import com.ecommerce.order.dtos.ProductResponse;
 
 @FeignClient(name="inventory-service")
 public interface InventoryFeignClient {
@@ -15,6 +16,10 @@ public interface InventoryFeignClient {
 	public InventoryAvailabilityDTO getAvailability(
 			@PathVariable UUID productId,
 			@RequestParam int requiredQuantity);
+	
+	@GetMapping("/v1/inventory/{id}")
+    ProductResponse getProduct(@PathVariable UUID  id);
+	
 
 	/*
 	 * public void reserveInventory(UUID orderId);

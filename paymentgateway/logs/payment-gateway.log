@@ -1,1 +1,647 @@
 2026-08-20 00:16:57.335 [http-nio-8080-exec-1] INFO  [payment-gateway] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-08-20 00:16:57.365 [http-nio-8080-exec-1] INFO  [payment-gateway] o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-08-20 00:16:57.396 [http-nio-8080-exec-1] INFO  [payment-gateway] o.s.web.servlet.DispatcherServlet - Completed initialization in 31 ms
+2026-08-20 00:16:57.527 [http-nio-8080-exec-1] DEBUG [payment-gateway] org.hibernate.SQL - 
+    select
+        mc1_0.id,
+        mc1_0.active,
+        mc1_0.api_key,
+        mc1_0.api_secret_hash,
+        mc1_0.connect_timeout_ms,
+        mc1_0.created_at,
+        mc1_0.environment,
+        mc1_0.merchant_id,
+        mc1_0.merchant_name,
+        mc1_0.read_timeout_ms,
+        mc1_0.updated_at 
+    from
+        public.merchant_credentials mc1_0 
+    where
+        mc1_0.api_key=?
+2026-08-20 00:16:57.532 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [pgw_test_ecomm_abc123xyz789]
+2026-08-20 00:16:57.751 [http-nio-8080-exec-1] DEBUG [payment-gateway] c.p.security.ApiKeyAuthFilter - Auth OK: merchant=MERCH_ECOMM_001 env=TEST connectTimeout=5000ms readTimeout=30000ms
+2026-08-20 00:16:58.316 [http-nio-8080-exec-1] INFO  [payment-gateway] c.p.controller.PaymentController - POST /initiate | orderId=a607f6b0-351e-4cf8-a5de-d718186a9307 | mode=UPI | merchant=MERCH_ECOMM_001 | connectTimeout=5000ms | readTimeout=30000ms
+2026-08-20 00:16:58.339 [http-nio-8080-exec-1] INFO  [payment-gateway] c.p.service.PaymentServiceImpl - Initiating payment | orderId=a607f6b0-351e-4cf8-a5de-d718186a9307 | mode=UPI | amount=1 INR
+2026-08-20 00:16:58.357 [http-nio-8080-exec-1] DEBUG [payment-gateway] org.hibernate.SQL - 
+    select
+        t1_0.id 
+    from
+        public.transactions t1_0 
+    where
+        t1_0.order_id=? 
+    fetch
+        first ? rows only
+2026-08-20 00:16:58.358 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [a607f6b0-351e-4cf8-a5de-d718186a9307]
+2026-08-20 00:16:58.359 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (2:INTEGER) <- [1]
+2026-08-20 00:16:58.387 [http-nio-8080-exec-1] DEBUG [payment-gateway] org.hibernate.SQL - 
+    select
+        b1_0.id,
+        b1_0.bank_code,
+        b1_0.bank_name,
+        b1_0.created_at,
+        b1_0.ifsc_prefix,
+        b1_0.is_active,
+        b1_0.supports_net_banking,
+        b1_0.supports_upi,
+        b1_0.updated_at,
+        b1_0.upi_handles 
+    from
+        public.banks b1_0 
+    where
+        b1_0.supports_upi 
+        and b1_0.is_active 
+    order by
+        b1_0.bank_name
+2026-08-20 00:16:58.403 [http-nio-8080-exec-1] WARN  [payment-gateway] c.p.service.validation.UpiValidator - UPI bank handle 'upi' not found in active bank master list | txnId=PRE-E19FDDD59B53
+2026-08-20 00:16:58.404 [http-nio-8080-exec-1] DEBUG [payment-gateway] c.p.service.validation.UpiValidator - UPI validation passed | 4 rules | txnId=PRE-E19FDDD59B53
+2026-08-20 00:16:58.498 [http-nio-8080-exec-1] DEBUG [payment-gateway] org.hibernate.SQL - 
+    insert 
+    into
+        public.validation_audit
+        (created_at, message, payment_mode, result, rule_name, transaction_id) 
+    values
+        (?, ?, ?, ?, ?, ?) 
+    returning id
+2026-08-20 00:16:58.504 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (1:TIMESTAMP) <- [2026-08-20T00:16:58.471623]
+2026-08-20 00:16:58.506 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (2:VARCHAR) <- [UPI ID field is present.]
+2026-08-20 00:16:58.506 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (3:VARCHAR) <- [UPI]
+2026-08-20 00:16:58.507 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (4:VARCHAR) <- [PASS]
+2026-08-20 00:16:58.507 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (5:VARCHAR) <- [UPI_ID_PRESENT]
+2026-08-20 00:16:58.508 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (6:VARCHAR) <- [PRE-E19FDDD59B53]
+2026-08-20 00:16:58.558 [http-nio-8080-exec-1] DEBUG [payment-gateway] org.hibernate.SQL - 
+    insert 
+    into
+        public.validation_audit
+        (created_at, message, payment_mode, result, rule_name, transaction_id) 
+    values
+        (?, ?, ?, ?, ?, ?) 
+    returning id
+2026-08-20 00:16:58.559 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (1:TIMESTAMP) <- [2026-08-20T00:16:58.557247]
+2026-08-20 00:16:58.559 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (2:VARCHAR) <- [UPI ID format is valid: payment-service@upi]
+2026-08-20 00:16:58.559 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (3:VARCHAR) <- [UPI]
+2026-08-20 00:16:58.559 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (4:VARCHAR) <- [PASS]
+2026-08-20 00:16:58.560 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (5:VARCHAR) <- [UPI_FORMAT_CHECK]
+2026-08-20 00:16:58.560 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (6:VARCHAR) <- [PRE-E19FDDD59B53]
+2026-08-20 00:16:58.562 [http-nio-8080-exec-1] DEBUG [payment-gateway] org.hibernate.SQL - 
+    insert 
+    into
+        public.validation_audit
+        (created_at, message, payment_mode, result, rule_name, transaction_id) 
+    values
+        (?, ?, ?, ?, ?, ?) 
+    returning id
+2026-08-20 00:16:58.563 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (1:TIMESTAMP) <- [2026-08-20T00:16:58.562702]
+2026-08-20 00:16:58.564 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (2:VARCHAR) <- [Bank handle '@upi' not in master list; proceeding (simulation mode).]
+2026-08-20 00:16:58.564 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (3:VARCHAR) <- [UPI]
+2026-08-20 00:16:58.564 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (4:VARCHAR) <- [PASS]
+2026-08-20 00:16:58.564 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (5:VARCHAR) <- [UPI_BANK_HANDLE_EXISTS]
+2026-08-20 00:16:58.565 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (6:VARCHAR) <- [PRE-E19FDDD59B53]
+2026-08-20 00:16:58.568 [http-nio-8080-exec-1] DEBUG [payment-gateway] org.hibernate.SQL - 
+    insert 
+    into
+        public.validation_audit
+        (created_at, message, payment_mode, result, rule_name, transaction_id) 
+    values
+        (?, ?, ?, ?, ?, ?) 
+    returning id
+2026-08-20 00:16:58.569 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (1:TIMESTAMP) <- [2026-08-20T00:16:58.568013]
+2026-08-20 00:16:58.569 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (2:VARCHAR) <- [Amount 1 is positive.]
+2026-08-20 00:16:58.569 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (3:VARCHAR) <- [UPI]
+2026-08-20 00:16:58.570 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (4:VARCHAR) <- [PASS]
+2026-08-20 00:16:58.570 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (5:VARCHAR) <- [AMOUNT_POSITIVE]
+2026-08-20 00:16:58.570 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (6:VARCHAR) <- [PRE-E19FDDD59B53]
+2026-08-20 00:16:58.573 [http-nio-8080-exec-1] DEBUG [payment-gateway] c.p.s.v.ValidationAuditService - Saved 4 validation audit record(s) | txnId=PRE-E19FDDD59B53
+2026-08-20 00:16:58.602 [http-nio-8080-exec-1] DEBUG [payment-gateway] c.p.s.provider.UPIPaymentProvider - UPI processing delay: 378ms
+2026-08-20 00:16:58.996 [http-nio-8080-exec-1] INFO  [payment-gateway] c.p.s.provider.UPIPaymentProvider - UPI success | vpa=payment-service@upi | orderId=a607f6b0-351e-4cf8-a5de-d718186a9307
+2026-08-20 00:16:59.011 [http-nio-8080-exec-1] DEBUG [payment-gateway] org.hibernate.SQL - 
+    insert 
+    into
+        public.transactions
+        (amount, completed_at, created_at, currency, customer_email, customer_name, customer_phone, description, failure_reason, gateway_reference_id, merchant_id, order_id, payment_mode, status, transaction_id, updated_at) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
+    returning id
+2026-08-20 00:16:59.012 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (1:NUMERIC) <- [1]
+2026-08-20 00:16:59.014 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (2:TIMESTAMP) <- [2026-08-20T00:16:58.996079400]
+2026-08-20 00:16:59.015 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (3:TIMESTAMP) <- [2026-08-20T00:16:59.010976]
+2026-08-20 00:16:59.016 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (4:VARCHAR) <- [INR]
+2026-08-20 00:16:59.016 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (5:VARCHAR) <- [payment-service@ecommerce.com]
+2026-08-20 00:16:59.016 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (6:VARCHAR) <- [Internal Service]
+2026-08-20 00:16:59.016 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (7:VARCHAR) <- [9999999999]
+2026-08-20 00:16:59.016 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (8:VARCHAR) <- [Payment for order a607f6b0-351e-4cf8-a5de-d718186a9307]
+2026-08-20 00:16:59.017 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (9:VARCHAR) <- [null]
+2026-08-20 00:16:59.017 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (10:VARCHAR) <- [GW-REF-91525809]
+2026-08-20 00:16:59.017 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (11:VARCHAR) <- [MERCH_ECOMM_001]
+2026-08-20 00:16:59.017 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (12:VARCHAR) <- [a607f6b0-351e-4cf8-a5de-d718186a9307]
+2026-08-20 00:16:59.018 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (13:VARCHAR) <- [UPI]
+2026-08-20 00:16:59.018 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (14:VARCHAR) <- [SUCCESS]
+2026-08-20 00:16:59.018 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (15:VARCHAR) <- [TXN-UPI-39DD6B9020]
+2026-08-20 00:16:59.019 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (16:TIMESTAMP) <- [2026-08-20T00:16:59.010976]
+2026-08-20 00:16:59.036 [http-nio-8080-exec-1] DEBUG [payment-gateway] org.hibernate.SQL - 
+    insert 
+    into
+        public.upi_payment_details
+        (bank_handle, created_at, transaction_id, upi_txn_ref_id, vpa) 
+    values
+        (?, ?, ?, ?, ?) 
+    returning id
+2026-08-20 00:16:59.037 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [upi]
+2026-08-20 00:16:59.037 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (2:TIMESTAMP) <- [2026-08-20T00:16:59.035533]
+2026-08-20 00:16:59.038 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (3:VARCHAR) <- [TXN-UPI-39DD6B9020]
+2026-08-20 00:16:59.038 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (4:VARCHAR) <- [NPCI-F70CA2965F7C]
+2026-08-20 00:16:59.038 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (5:VARCHAR) <- [payment-service@upi]
+2026-08-20 00:16:59.058 [http-nio-8080-exec-1] DEBUG [payment-gateway] org.hibernate.SQL - 
+    select
+        va1_0.id,
+        va1_0.created_at,
+        va1_0.message,
+        va1_0.payment_mode,
+        va1_0.result,
+        va1_0.rule_name,
+        va1_0.transaction_id 
+    from
+        public.validation_audit va1_0 
+    where
+        va1_0.transaction_id=? 
+    order by
+        va1_0.created_at
+2026-08-20 00:16:59.059 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [PRE-E19FDDD59B53]
+2026-08-20 00:16:59.075 [http-nio-8080-exec-1] DEBUG [payment-gateway] c.p.service.PaymentServiceImpl - Re-keyed 4 audit record(s) from PRE-E19FDDD59B53 → TXN-UPI-39DD6B9020
+2026-08-20 00:16:59.075 [http-nio-8080-exec-1] INFO  [payment-gateway] c.p.service.PaymentServiceImpl - Payment initiated | txnId=TXN-UPI-39DD6B9020 | status=SUCCESS
+2026-08-20 00:16:59.107 [http-nio-8080-exec-1] DEBUG [payment-gateway] org.hibernate.SQL - 
+    update
+        public.validation_audit 
+    set
+        message=?,
+        payment_mode=?,
+        result=?,
+        rule_name=?,
+        transaction_id=? 
+    where
+        id=?
+2026-08-20 00:16:59.107 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [UPI ID field is present.]
+2026-08-20 00:16:59.108 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (2:VARCHAR) <- [UPI]
+2026-08-20 00:16:59.108 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (3:VARCHAR) <- [PASS]
+2026-08-20 00:16:59.108 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (4:VARCHAR) <- [UPI_ID_PRESENT]
+2026-08-20 00:16:59.108 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (5:VARCHAR) <- [TXN-UPI-39DD6B9020]
+2026-08-20 00:16:59.109 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (6:BIGINT) <- [23]
+2026-08-20 00:16:59.115 [http-nio-8080-exec-1] DEBUG [payment-gateway] org.hibernate.SQL - 
+    update
+        public.validation_audit 
+    set
+        message=?,
+        payment_mode=?,
+        result=?,
+        rule_name=?,
+        transaction_id=? 
+    where
+        id=?
+2026-08-20 00:16:59.115 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [UPI ID format is valid: payment-service@upi]
+2026-08-20 00:16:59.116 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (2:VARCHAR) <- [UPI]
+2026-08-20 00:16:59.116 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (3:VARCHAR) <- [PASS]
+2026-08-20 00:16:59.116 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (4:VARCHAR) <- [UPI_FORMAT_CHECK]
+2026-08-20 00:16:59.116 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (5:VARCHAR) <- [TXN-UPI-39DD6B9020]
+2026-08-20 00:16:59.117 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (6:BIGINT) <- [24]
+2026-08-20 00:16:59.118 [http-nio-8080-exec-1] DEBUG [payment-gateway] org.hibernate.SQL - 
+    update
+        public.validation_audit 
+    set
+        message=?,
+        payment_mode=?,
+        result=?,
+        rule_name=?,
+        transaction_id=? 
+    where
+        id=?
+2026-08-20 00:16:59.118 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [Bank handle '@upi' not in master list; proceeding (simulation mode).]
+2026-08-20 00:16:59.119 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (2:VARCHAR) <- [UPI]
+2026-08-20 00:16:59.119 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (3:VARCHAR) <- [PASS]
+2026-08-20 00:16:59.120 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (4:VARCHAR) <- [UPI_BANK_HANDLE_EXISTS]
+2026-08-20 00:16:59.120 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (5:VARCHAR) <- [TXN-UPI-39DD6B9020]
+2026-08-20 00:16:59.120 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (6:BIGINT) <- [25]
+2026-08-20 00:16:59.121 [http-nio-8080-exec-1] DEBUG [payment-gateway] org.hibernate.SQL - 
+    update
+        public.validation_audit 
+    set
+        message=?,
+        payment_mode=?,
+        result=?,
+        rule_name=?,
+        transaction_id=? 
+    where
+        id=?
+2026-08-20 00:16:59.122 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [Amount 1 is positive.]
+2026-08-20 00:16:59.122 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (2:VARCHAR) <- [UPI]
+2026-08-20 00:16:59.123 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (3:VARCHAR) <- [PASS]
+2026-08-20 00:16:59.123 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (4:VARCHAR) <- [AMOUNT_POSITIVE]
+2026-08-20 00:16:59.123 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (5:VARCHAR) <- [TXN-UPI-39DD6B9020]
+2026-08-20 00:16:59.123 [http-nio-8080-exec-1] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (6:BIGINT) <- [26]
+2026-08-20 10:09:06.938 [background-preinit] INFO  [payment-gateway] o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.1.Final
+2026-08-20 10:09:06.990 [main] INFO  [payment-gateway] c.p.PaymentGatewayApplication - Starting PaymentGatewayApplication using Java 21.0.11 with PID 16260 (C:\Raju\ecommerce-microservice\paymentgateway\target\classes started by DELL in C:\Raju\ecommerce-microservice\paymentgateway)
+2026-08-20 10:09:06.990 [main] DEBUG [payment-gateway] c.p.PaymentGatewayApplication - Running with Spring Boot v3.3.2, Spring v6.1.11
+2026-08-20 10:09:06.991 [main] INFO  [payment-gateway] c.p.PaymentGatewayApplication - No active profile set, falling back to 1 default profile: "default"
+2026-08-20 10:09:08.030 [main] INFO  [payment-gateway] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-08-20 10:09:08.137 [main] INFO  [payment-gateway] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 93 ms. Found 8 JPA repository interfaces.
+2026-08-20 10:09:08.940 [main] INFO  [payment-gateway] o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2026-08-20 10:09:08.956 [main] INFO  [payment-gateway] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-08-20 10:09:08.959 [main] INFO  [payment-gateway] o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-08-20 10:09:08.959 [main] INFO  [payment-gateway] o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.26]
+2026-08-20 10:09:09.053 [main] INFO  [payment-gateway] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-08-20 10:09:09.053 [main] INFO  [payment-gateway] o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 2013 ms
+2026-08-20 10:09:09.231 [main] INFO  [payment-gateway] o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-08-20 10:09:09.312 [main] INFO  [payment-gateway] org.hibernate.Version - HHH000412: Hibernate ORM core version 6.5.2.Final
+2026-08-20 10:09:09.368 [main] INFO  [payment-gateway] o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-08-20 10:09:09.841 [main] INFO  [payment-gateway] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-08-20 10:09:09.879 [main] INFO  [payment-gateway] com.zaxxer.hikari.HikariDataSource - PaymentGatewayPool - Starting...
+2026-08-20 10:09:10.095 [main] INFO  [payment-gateway] com.zaxxer.hikari.pool.HikariPool - PaymentGatewayPool - Added connection org.postgresql.jdbc.PgConnection@3fd9e01c
+2026-08-20 10:09:10.098 [main] INFO  [payment-gateway] com.zaxxer.hikari.HikariDataSource - PaymentGatewayPool - Start completed.
+2026-08-20 10:09:10.143 [main] WARN  [payment-gateway] org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-08-20 10:09:11.698 [main] INFO  [payment-gateway] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-08-20 10:09:11.784 [main] DEBUG [payment-gateway] org.hibernate.SQL - 
+    alter table if exists public.refunds 
+       alter column reason set data type TEXT
+2026-08-20 10:09:11.787 [main] DEBUG [payment-gateway] org.hibernate.SQL - 
+    alter table if exists public.validation_audit 
+       alter column message set data type TEXT
+2026-08-20 10:09:11.885 [main] INFO  [payment-gateway] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-08-20 10:09:12.259 [main] DEBUG [payment-gateway] c.p.security.ApiKeyAuthFilter - Filter 'apiKeyAuthFilter' configured for use
+2026-08-20 10:09:12.362 [main] INFO  [payment-gateway] o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-08-20 10:09:13.038 [main] WARN  [payment-gateway] o.s.b.a.s.s.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: d607b5b7-c2ce-45a2-a581-beae06a80833
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-08-20 10:09:13.049 [main] INFO  [payment-gateway] o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-08-20 10:09:13.714 [main] INFO  [payment-gateway] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-08-20 10:09:13.721 [main] WARN  [payment-gateway] o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Failed to start bean 'webServerStartStop'
+2026-08-20 10:09:13.724 [main] INFO  [payment-gateway] o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-20 10:09:13.726 [main] INFO  [payment-gateway] com.zaxxer.hikari.HikariDataSource - PaymentGatewayPool - Shutdown initiated...
+2026-08-20 10:09:13.728 [main] INFO  [payment-gateway] com.zaxxer.hikari.HikariDataSource - PaymentGatewayPool - Shutdown completed.
+2026-08-20 10:09:13.743 [main] INFO  [payment-gateway] o.s.b.a.l.ConditionEvaluationReportLogger - 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-08-20 10:09:13.764 [main] ERROR [payment-gateway] o.s.b.d.LoggingFailureAnalysisReporter - 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Web server failed to start. Port 8080 was already in use.
+
+Action:
+
+Identify and stop the process that's listening on port 8080 or configure this application to listen on another port.
+
+2026-08-20 10:25:44.972 [background-preinit] INFO  [payment-gateway] o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.1.Final
+2026-08-20 10:25:45.023 [main] INFO  [payment-gateway] c.p.PaymentGatewayApplication - Starting PaymentGatewayApplication using Java 21.0.11 with PID 12212 (C:\Raju\ecommerce-microservice\paymentgateway\target\classes started by DELL in C:\Raju\ecommerce-microservice\paymentgateway)
+2026-08-20 10:25:45.023 [main] DEBUG [payment-gateway] c.p.PaymentGatewayApplication - Running with Spring Boot v3.3.2, Spring v6.1.11
+2026-08-20 10:25:45.023 [main] INFO  [payment-gateway] c.p.PaymentGatewayApplication - No active profile set, falling back to 1 default profile: "default"
+2026-08-20 10:25:46.089 [main] INFO  [payment-gateway] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-08-20 10:25:46.188 [main] INFO  [payment-gateway] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 88 ms. Found 8 JPA repository interfaces.
+2026-08-20 10:25:46.786 [main] INFO  [payment-gateway] o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2026-08-20 10:25:46.799 [main] INFO  [payment-gateway] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-08-20 10:25:46.801 [main] INFO  [payment-gateway] o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-08-20 10:25:46.802 [main] INFO  [payment-gateway] o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.26]
+2026-08-20 10:25:46.877 [main] INFO  [payment-gateway] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-08-20 10:25:46.878 [main] INFO  [payment-gateway] o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1801 ms
+2026-08-20 10:25:47.022 [main] INFO  [payment-gateway] o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-08-20 10:25:47.095 [main] INFO  [payment-gateway] org.hibernate.Version - HHH000412: Hibernate ORM core version 6.5.2.Final
+2026-08-20 10:25:47.137 [main] INFO  [payment-gateway] o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-08-20 10:25:47.520 [main] INFO  [payment-gateway] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-08-20 10:25:47.573 [main] INFO  [payment-gateway] com.zaxxer.hikari.HikariDataSource - PaymentGatewayPool - Starting...
+2026-08-20 10:25:47.792 [main] INFO  [payment-gateway] com.zaxxer.hikari.pool.HikariPool - PaymentGatewayPool - Added connection org.postgresql.jdbc.PgConnection@1c787389
+2026-08-20 10:25:47.795 [main] INFO  [payment-gateway] com.zaxxer.hikari.HikariDataSource - PaymentGatewayPool - Start completed.
+2026-08-20 10:25:47.842 [main] WARN  [payment-gateway] org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-08-20 10:25:49.261 [main] INFO  [payment-gateway] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-08-20 10:25:49.321 [main] DEBUG [payment-gateway] org.hibernate.SQL - 
+    alter table if exists public.refunds 
+       alter column reason set data type TEXT
+2026-08-20 10:25:49.326 [main] DEBUG [payment-gateway] org.hibernate.SQL - 
+    alter table if exists public.validation_audit 
+       alter column message set data type TEXT
+2026-08-20 10:25:49.418 [main] INFO  [payment-gateway] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-08-20 10:25:49.827 [main] DEBUG [payment-gateway] c.p.security.ApiKeyAuthFilter - Filter 'apiKeyAuthFilter' configured for use
+2026-08-20 10:25:49.930 [main] INFO  [payment-gateway] o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-08-20 10:25:50.630 [main] WARN  [payment-gateway] o.s.b.a.s.s.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: 4720489a-d18f-4ee5-a848-e99e8a8e59a5
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-08-20 10:25:50.639 [main] INFO  [payment-gateway] o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-08-20 10:25:51.288 [main] INFO  [payment-gateway] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-08-20 10:25:51.294 [main] WARN  [payment-gateway] o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Failed to start bean 'webServerStartStop'
+2026-08-20 10:25:51.298 [main] INFO  [payment-gateway] o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-20 10:25:51.300 [main] INFO  [payment-gateway] com.zaxxer.hikari.HikariDataSource - PaymentGatewayPool - Shutdown initiated...
+2026-08-20 10:25:51.302 [main] INFO  [payment-gateway] com.zaxxer.hikari.HikariDataSource - PaymentGatewayPool - Shutdown completed.
+2026-08-20 10:25:51.318 [main] INFO  [payment-gateway] o.s.b.a.l.ConditionEvaluationReportLogger - 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-08-20 10:25:51.337 [main] ERROR [payment-gateway] o.s.b.d.LoggingFailureAnalysisReporter - 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Web server failed to start. Port 8080 was already in use.
+
+Action:
+
+Identify and stop the process that's listening on port 8080 or configure this application to listen on another port.
+
+2026-08-20 10:42:07.830 [background-preinit] INFO  [payment-gateway] o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.1.Final
+2026-08-20 10:42:07.881 [main] INFO  [payment-gateway] c.p.PaymentGatewayApplication - Starting PaymentGatewayApplication using Java 21.0.11 with PID 3204 (C:\Raju\ecommerce-microservice\paymentgateway\target\classes started by DELL in C:\Raju\ecommerce-microservice\paymentgateway)
+2026-08-20 10:42:07.881 [main] DEBUG [payment-gateway] c.p.PaymentGatewayApplication - Running with Spring Boot v3.3.2, Spring v6.1.11
+2026-08-20 10:42:07.882 [main] INFO  [payment-gateway] c.p.PaymentGatewayApplication - No active profile set, falling back to 1 default profile: "default"
+2026-08-20 10:42:09.084 [main] INFO  [payment-gateway] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-08-20 10:42:09.205 [main] INFO  [payment-gateway] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 111 ms. Found 8 JPA repository interfaces.
+2026-08-20 10:42:10.011 [main] INFO  [payment-gateway] o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2026-08-20 10:42:10.024 [main] INFO  [payment-gateway] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-08-20 10:42:10.028 [main] INFO  [payment-gateway] o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-08-20 10:42:10.028 [main] INFO  [payment-gateway] o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.26]
+2026-08-20 10:42:10.100 [main] INFO  [payment-gateway] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-08-20 10:42:10.101 [main] INFO  [payment-gateway] o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 2164 ms
+2026-08-20 10:42:10.273 [main] INFO  [payment-gateway] o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-08-20 10:42:10.393 [main] INFO  [payment-gateway] org.hibernate.Version - HHH000412: Hibernate ORM core version 6.5.2.Final
+2026-08-20 10:42:10.442 [main] INFO  [payment-gateway] o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-08-20 10:42:10.838 [main] INFO  [payment-gateway] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-08-20 10:42:10.874 [main] INFO  [payment-gateway] com.zaxxer.hikari.HikariDataSource - PaymentGatewayPool - Starting...
+2026-08-20 10:42:11.081 [main] INFO  [payment-gateway] com.zaxxer.hikari.pool.HikariPool - PaymentGatewayPool - Added connection org.postgresql.jdbc.PgConnection@1b3bb287
+2026-08-20 10:42:11.083 [main] INFO  [payment-gateway] com.zaxxer.hikari.HikariDataSource - PaymentGatewayPool - Start completed.
+2026-08-20 10:42:11.139 [main] WARN  [payment-gateway] org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-08-20 10:42:13.190 [main] INFO  [payment-gateway] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-08-20 10:42:13.248 [main] DEBUG [payment-gateway] org.hibernate.SQL - 
+    alter table if exists public.refunds 
+       alter column reason set data type TEXT
+2026-08-20 10:42:13.253 [main] DEBUG [payment-gateway] org.hibernate.SQL - 
+    alter table if exists public.validation_audit 
+       alter column message set data type TEXT
+2026-08-20 10:42:13.338 [main] INFO  [payment-gateway] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-08-20 10:42:13.708 [main] DEBUG [payment-gateway] c.p.security.ApiKeyAuthFilter - Filter 'apiKeyAuthFilter' configured for use
+2026-08-20 10:42:13.805 [main] INFO  [payment-gateway] o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-08-20 10:42:14.477 [main] WARN  [payment-gateway] o.s.b.a.s.s.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: 35b26ac0-7a2c-4245-a3d7-d0b8e6cfb249
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-08-20 10:42:14.486 [main] INFO  [payment-gateway] o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-08-20 10:42:15.167 [main] INFO  [payment-gateway] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-08-20 10:42:15.196 [main] INFO  [payment-gateway] o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2026-08-20 10:42:15.208 [main] INFO  [payment-gateway] c.p.PaymentGatewayApplication - Started PaymentGatewayApplication in 7.989 seconds (process running for 9.05)
+2026-08-20 10:42:15.339 [main] DEBUG [payment-gateway] org.hibernate.SQL - 
+    select
+        mc1_0.id,
+        mc1_0.active,
+        mc1_0.api_key,
+        mc1_0.api_secret_hash,
+        mc1_0.connect_timeout_ms,
+        mc1_0.created_at,
+        mc1_0.environment,
+        mc1_0.merchant_id,
+        mc1_0.merchant_name,
+        mc1_0.read_timeout_ms,
+        mc1_0.updated_at 
+    from
+        public.merchant_credentials mc1_0 
+    where
+        mc1_0.api_key=?
+2026-08-20 10:42:15.342 [main] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [pgw_test_ecomm_abc123xyz789]
+2026-08-20 10:42:15.363 [main] DEBUG [payment-gateway] c.p.config.MerchantCredentialsSeeder - Credentials already exist for apiKey: pgw_test_ecomm_abc123xyz789
+2026-08-20 10:42:15.365 [main] DEBUG [payment-gateway] org.hibernate.SQL - 
+    select
+        mc1_0.id,
+        mc1_0.active,
+        mc1_0.api_key,
+        mc1_0.api_secret_hash,
+        mc1_0.connect_timeout_ms,
+        mc1_0.created_at,
+        mc1_0.environment,
+        mc1_0.merchant_id,
+        mc1_0.merchant_name,
+        mc1_0.read_timeout_ms,
+        mc1_0.updated_at 
+    from
+        public.merchant_credentials mc1_0 
+    where
+        mc1_0.api_key=?
+2026-08-20 10:42:15.365 [main] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [pgw_test_flipkart_def456uvw012]
+2026-08-20 10:42:15.367 [main] DEBUG [payment-gateway] c.p.config.MerchantCredentialsSeeder - Credentials already exist for apiKey: pgw_test_flipkart_def456uvw012
+2026-08-20 10:42:15.367 [main] INFO  [payment-gateway] c.p.config.MerchantCredentialsSeeder - 
+
+╔══════════════════════════════════════════════════════════════════════╗
+║             PAYMENT GATEWAY — TEST CREDENTIALS READY                ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  Merchant 1 — Ecommerce Platform                                    ║
+║    X-Api-Key    : pgw_test_ecomm_abc123xyz789                       ║
+║    X-Api-Secret : ecomm_secret_do_not_use_in_prod                   ║
+║    Timeouts     : connect=5000ms  read=30000ms                      ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  Merchant 2 — Flipkart Demo                                         ║
+║    X-Api-Key    : pgw_test_flipkart_def456uvw012                    ║
+║    X-Api-Secret : flipkart_secret_do_not_use_in_prod                ║
+║    Timeouts     : connect=3000ms  read=20000ms                      ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  Swagger UI : http://localhost:8080/swagger-ui.html                 ║
+║  Add headers: X-Api-Key and X-Api-Secret in Swagger Authorize       ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+2026-08-20 11:01:07.166 [background-preinit] INFO  [payment-gateway] o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.1.Final
+2026-08-20 11:01:07.215 [main] INFO  [payment-gateway] c.p.PaymentGatewayApplication - Starting PaymentGatewayApplication using Java 21.0.11 with PID 25456 (C:\Raju\ecommerce-microservice\paymentgateway\target\classes started by DELL in C:\Raju\ecommerce-microservice\paymentgateway)
+2026-08-20 11:01:07.215 [main] DEBUG [payment-gateway] c.p.PaymentGatewayApplication - Running with Spring Boot v3.3.2, Spring v6.1.11
+2026-08-20 11:01:07.216 [main] INFO  [payment-gateway] c.p.PaymentGatewayApplication - No active profile set, falling back to 1 default profile: "default"
+2026-08-20 11:01:08.206 [main] INFO  [payment-gateway] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-08-20 11:01:08.347 [main] INFO  [payment-gateway] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 122 ms. Found 8 JPA repository interfaces.
+2026-08-20 11:01:09.146 [main] INFO  [payment-gateway] o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2026-08-20 11:01:09.158 [main] INFO  [payment-gateway] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-08-20 11:01:09.160 [main] INFO  [payment-gateway] o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-08-20 11:01:09.161 [main] INFO  [payment-gateway] o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.26]
+2026-08-20 11:01:09.223 [main] INFO  [payment-gateway] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-08-20 11:01:09.225 [main] INFO  [payment-gateway] o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1962 ms
+2026-08-20 11:01:09.386 [main] INFO  [payment-gateway] o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-08-20 11:01:09.456 [main] INFO  [payment-gateway] org.hibernate.Version - HHH000412: Hibernate ORM core version 6.5.2.Final
+2026-08-20 11:01:09.502 [main] INFO  [payment-gateway] o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-08-20 11:01:09.969 [main] INFO  [payment-gateway] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-08-20 11:01:10.019 [main] INFO  [payment-gateway] com.zaxxer.hikari.HikariDataSource - PaymentGatewayPool - Starting...
+2026-08-20 11:01:10.211 [main] INFO  [payment-gateway] com.zaxxer.hikari.pool.HikariPool - PaymentGatewayPool - Added connection org.postgresql.jdbc.PgConnection@24258b54
+2026-08-20 11:01:10.213 [main] INFO  [payment-gateway] com.zaxxer.hikari.HikariDataSource - PaymentGatewayPool - Start completed.
+2026-08-20 11:01:10.257 [main] WARN  [payment-gateway] org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-08-20 11:01:12.185 [main] INFO  [payment-gateway] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-08-20 11:01:12.288 [main] DEBUG [payment-gateway] org.hibernate.SQL - 
+    alter table if exists public.refunds 
+       alter column reason set data type TEXT
+2026-08-20 11:01:12.291 [main] DEBUG [payment-gateway] org.hibernate.SQL - 
+    alter table if exists public.validation_audit 
+       alter column message set data type TEXT
+2026-08-20 11:01:12.442 [main] INFO  [payment-gateway] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-08-20 11:01:12.912 [main] DEBUG [payment-gateway] c.p.security.ApiKeyAuthFilter - Filter 'apiKeyAuthFilter' configured for use
+2026-08-20 11:01:13.034 [main] INFO  [payment-gateway] o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-08-20 11:01:13.891 [main] WARN  [payment-gateway] o.s.b.a.s.s.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: 6bd09e9e-564b-42e2-ba87-22fdd8d23204
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-08-20 11:01:13.900 [main] INFO  [payment-gateway] o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-08-20 11:01:14.610 [main] INFO  [payment-gateway] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-08-20 11:01:14.635 [main] INFO  [payment-gateway] o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2026-08-20 11:01:14.647 [main] INFO  [payment-gateway] c.p.PaymentGatewayApplication - Started PaymentGatewayApplication in 8.016 seconds (process running for 8.84)
+2026-08-20 11:01:14.778 [main] DEBUG [payment-gateway] org.hibernate.SQL - 
+    select
+        mc1_0.id,
+        mc1_0.active,
+        mc1_0.api_key,
+        mc1_0.api_secret_hash,
+        mc1_0.connect_timeout_ms,
+        mc1_0.created_at,
+        mc1_0.environment,
+        mc1_0.merchant_id,
+        mc1_0.merchant_name,
+        mc1_0.read_timeout_ms,
+        mc1_0.updated_at 
+    from
+        public.merchant_credentials mc1_0 
+    where
+        mc1_0.api_key=?
+2026-08-20 11:01:14.781 [main] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [pgw_test_ecomm_abc123xyz789]
+2026-08-20 11:01:14.798 [main] DEBUG [payment-gateway] c.p.config.MerchantCredentialsSeeder - Credentials already exist for apiKey: pgw_test_ecomm_abc123xyz789
+2026-08-20 11:01:14.799 [main] DEBUG [payment-gateway] org.hibernate.SQL - 
+    select
+        mc1_0.id,
+        mc1_0.active,
+        mc1_0.api_key,
+        mc1_0.api_secret_hash,
+        mc1_0.connect_timeout_ms,
+        mc1_0.created_at,
+        mc1_0.environment,
+        mc1_0.merchant_id,
+        mc1_0.merchant_name,
+        mc1_0.read_timeout_ms,
+        mc1_0.updated_at 
+    from
+        public.merchant_credentials mc1_0 
+    where
+        mc1_0.api_key=?
+2026-08-20 11:01:14.800 [main] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [pgw_test_flipkart_def456uvw012]
+2026-08-20 11:01:14.801 [main] DEBUG [payment-gateway] c.p.config.MerchantCredentialsSeeder - Credentials already exist for apiKey: pgw_test_flipkart_def456uvw012
+2026-08-20 11:01:14.801 [main] INFO  [payment-gateway] c.p.config.MerchantCredentialsSeeder - 
+
+╔══════════════════════════════════════════════════════════════════════╗
+║             PAYMENT GATEWAY — TEST CREDENTIALS READY                ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  Merchant 1 — Ecommerce Platform                                    ║
+║    X-Api-Key    : pgw_test_ecomm_abc123xyz789                       ║
+║    X-Api-Secret : ecomm_secret_do_not_use_in_prod                   ║
+║    Timeouts     : connect=5000ms  read=30000ms                      ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  Merchant 2 — Flipkart Demo                                         ║
+║    X-Api-Key    : pgw_test_flipkart_def456uvw012                    ║
+║    X-Api-Secret : flipkart_secret_do_not_use_in_prod                ║
+║    Timeouts     : connect=3000ms  read=20000ms                      ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  Swagger UI : http://localhost:8080/swagger-ui.html                 ║
+║  Add headers: X-Api-Key and X-Api-Secret in Swagger Authorize       ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+2026-08-20 12:41:56.426 [background-preinit] INFO  [payment-gateway] o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.1.Final
+2026-08-20 12:41:56.474 [main] INFO  [payment-gateway] c.p.PaymentGatewayApplication - Starting PaymentGatewayApplication using Java 21.0.11 with PID 14948 (C:\Raju\ecommerce-microservice\paymentgateway\target\classes started by DELL in C:\Raju\ecommerce-microservice\paymentgateway)
+2026-08-20 12:41:56.476 [main] DEBUG [payment-gateway] c.p.PaymentGatewayApplication - Running with Spring Boot v3.3.2, Spring v6.1.11
+2026-08-20 12:41:56.477 [main] INFO  [payment-gateway] c.p.PaymentGatewayApplication - No active profile set, falling back to 1 default profile: "default"
+2026-08-20 12:41:57.467 [main] INFO  [payment-gateway] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-08-20 12:41:57.560 [main] INFO  [payment-gateway] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 82 ms. Found 8 JPA repository interfaces.
+2026-08-20 12:41:58.219 [main] INFO  [payment-gateway] o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2026-08-20 12:41:58.231 [main] INFO  [payment-gateway] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2026-08-20 12:41:58.234 [main] INFO  [payment-gateway] o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-08-20 12:41:58.235 [main] INFO  [payment-gateway] o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.26]
+2026-08-20 12:41:58.301 [main] INFO  [payment-gateway] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-08-20 12:41:58.301 [main] INFO  [payment-gateway] o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1777 ms
+2026-08-20 12:41:58.474 [main] INFO  [payment-gateway] o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-08-20 12:41:58.544 [main] INFO  [payment-gateway] org.hibernate.Version - HHH000412: Hibernate ORM core version 6.5.2.Final
+2026-08-20 12:41:58.588 [main] INFO  [payment-gateway] o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-08-20 12:41:59.005 [main] INFO  [payment-gateway] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-08-20 12:41:59.040 [main] INFO  [payment-gateway] com.zaxxer.hikari.HikariDataSource - PaymentGatewayPool - Starting...
+2026-08-20 12:41:59.228 [main] INFO  [payment-gateway] com.zaxxer.hikari.pool.HikariPool - PaymentGatewayPool - Added connection org.postgresql.jdbc.PgConnection@1ce2029b
+2026-08-20 12:41:59.230 [main] INFO  [payment-gateway] com.zaxxer.hikari.HikariDataSource - PaymentGatewayPool - Start completed.
+2026-08-20 12:41:59.273 [main] WARN  [payment-gateway] org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-08-20 12:42:00.724 [main] INFO  [payment-gateway] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-08-20 12:42:00.801 [main] DEBUG [payment-gateway] org.hibernate.SQL - 
+    alter table if exists public.refunds 
+       alter column reason set data type TEXT
+2026-08-20 12:42:00.806 [main] DEBUG [payment-gateway] org.hibernate.SQL - 
+    alter table if exists public.validation_audit 
+       alter column message set data type TEXT
+2026-08-20 12:42:00.904 [main] INFO  [payment-gateway] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-08-20 12:42:01.316 [main] DEBUG [payment-gateway] c.p.security.ApiKeyAuthFilter - Filter 'apiKeyAuthFilter' configured for use
+2026-08-20 12:42:01.424 [main] INFO  [payment-gateway] o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-08-20 12:42:02.183 [main] WARN  [payment-gateway] o.s.b.a.s.s.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: 58d3a30d-7e01-4044-8819-73a5391bacfe
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-08-20 12:42:02.193 [main] INFO  [payment-gateway] o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-08-20 12:42:02.915 [main] INFO  [payment-gateway] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2026-08-20 12:42:02.935 [main] INFO  [payment-gateway] o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2026-08-20 12:42:02.949 [main] INFO  [payment-gateway] c.p.PaymentGatewayApplication - Started PaymentGatewayApplication in 7.123 seconds (process running for 7.988)
+2026-08-20 12:42:03.073 [main] DEBUG [payment-gateway] org.hibernate.SQL - 
+    select
+        mc1_0.id,
+        mc1_0.active,
+        mc1_0.api_key,
+        mc1_0.api_secret_hash,
+        mc1_0.connect_timeout_ms,
+        mc1_0.created_at,
+        mc1_0.environment,
+        mc1_0.merchant_id,
+        mc1_0.merchant_name,
+        mc1_0.read_timeout_ms,
+        mc1_0.updated_at 
+    from
+        public.merchant_credentials mc1_0 
+    where
+        mc1_0.api_key=?
+2026-08-20 12:42:03.076 [main] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [pgw_test_ecomm_abc123xyz789]
+2026-08-20 12:42:03.093 [main] DEBUG [payment-gateway] c.p.config.MerchantCredentialsSeeder - Credentials already exist for apiKey: pgw_test_ecomm_abc123xyz789
+2026-08-20 12:42:03.095 [main] DEBUG [payment-gateway] org.hibernate.SQL - 
+    select
+        mc1_0.id,
+        mc1_0.active,
+        mc1_0.api_key,
+        mc1_0.api_secret_hash,
+        mc1_0.connect_timeout_ms,
+        mc1_0.created_at,
+        mc1_0.environment,
+        mc1_0.merchant_id,
+        mc1_0.merchant_name,
+        mc1_0.read_timeout_ms,
+        mc1_0.updated_at 
+    from
+        public.merchant_credentials mc1_0 
+    where
+        mc1_0.api_key=?
+2026-08-20 12:42:03.095 [main] TRACE [payment-gateway] org.hibernate.orm.jdbc.bind - binding parameter (1:VARCHAR) <- [pgw_test_flipkart_def456uvw012]
+2026-08-20 12:42:03.097 [main] DEBUG [payment-gateway] c.p.config.MerchantCredentialsSeeder - Credentials already exist for apiKey: pgw_test_flipkart_def456uvw012
+2026-08-20 12:42:03.097 [main] INFO  [payment-gateway] c.p.config.MerchantCredentialsSeeder - 
+
+╔══════════════════════════════════════════════════════════════════════╗
+║             PAYMENT GATEWAY — TEST CREDENTIALS READY                ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  Merchant 1 — Ecommerce Platform                                    ║
+║    X-Api-Key    : pgw_test_ecomm_abc123xyz789                       ║
+║    X-Api-Secret : ecomm_secret_do_not_use_in_prod                   ║
+║    Timeouts     : connect=5000ms  read=30000ms                      ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  Merchant 2 — Flipkart Demo                                         ║
+║    X-Api-Key    : pgw_test_flipkart_def456uvw012                    ║
+║    X-Api-Secret : flipkart_secret_do_not_use_in_prod                ║
+║    Timeouts     : connect=3000ms  read=20000ms                      ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  Swagger UI : http://localhost:8080/swagger-ui.html                 ║
+║  Add headers: X-Api-Key and X-Api-Secret in Swagger Authorize       ║
+╚══════════════════════════════════════════════════════════════════════╝
+

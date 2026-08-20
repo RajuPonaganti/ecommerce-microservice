@@ -261,3 +261,51 @@ Caused by: java.lang.IllegalStateException: ConfigServerInstanceProvider require
 2026-08-20 00:14:38.074 [RMI TCP Connection(4)-127.0.0.1] INFO  [payment-service] o.s.web.servlet.DispatcherServlet - Completed initialization in 4 ms
 2026-08-20 00:14:38.418 [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] INFO  [payment-service] o.s.k.l.KafkaMessageListenerContainer - payment-service: partitions assigned: [inventory.stock-reserved.v1-0]
 2026-08-20 00:15:56.037 [background-preinit] INFO  [payment-service] o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.3.Final
+2026-08-20 00:15:57.397 [main] INFO  [payment-service] o.s.c.c.c.ConfigServicePropertySourceLocator - Fetching config from server at : http://192.168.29.36:8888/
+2026-08-20 00:15:58.420 [main] INFO  [payment-service] o.s.c.c.c.ConfigServicePropertySourceLocator - Located environment: name=payment-service, profiles=[dev], label=main, version=0dd609a2ad37c774a8acf53779738affab0bdba8, state=
+2026-08-20 00:15:58.422 [main] INFO  [payment-service] o.s.c.b.c.PropertySourceBootstrapConfiguration - Located property source: [BootstrapPropertySource {name='bootstrapProperties-configClient'}, BootstrapPropertySource {name='bootstrapProperties-https://github.com/RajuPonaganti/ecommerce-config/payment-service-dev.yml'}, BootstrapPropertySource {name='bootstrapProperties-https://github.com/RajuPonaganti/ecommerce-config/payment-service.yml'}]
+2026-08-20 00:15:58.434 [main] INFO  [payment-service] c.e.p.PaymentServiceApplication - The following 1 profile is active: "dev"
+2026-08-20 00:15:59.945 [main] INFO  [payment-service] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-08-20 00:16:00.143 [main] INFO  [payment-service] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 183 ms. Found 1 JPA repository interface.
+2026-08-20 00:16:00.674 [main] INFO  [payment-service] o.s.cloud.context.scope.GenericScope - BeanFactory id=9a6b7332-ebf1-3b84-90da-aec7d77b4510
+2026-08-20 00:16:01.668 [main] INFO  [payment-service] o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8087 (http)
+2026-08-20 00:16:01.689 [main] INFO  [payment-service] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8087"]
+2026-08-20 00:16:01.691 [main] INFO  [payment-service] o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-08-20 00:16:01.692 [main] INFO  [payment-service] o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.55]
+2026-08-20 00:16:01.819 [main] INFO  [payment-service] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-08-20 00:16:01.820 [main] INFO  [payment-service] o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 3365 ms
+2026-08-20 00:16:02.474 [main] INFO  [payment-service] o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-08-20 00:16:02.568 [main] INFO  [payment-service] org.hibernate.Version - HHH000412: Hibernate ORM core version 6.6.53.Final
+2026-08-20 00:16:02.639 [main] INFO  [payment-service] o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-08-20 00:16:03.095 [main] INFO  [payment-service] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-08-20 00:16:03.155 [main] INFO  [payment-service] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-08-20 00:16:03.416 [main] INFO  [payment-service] com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@352288bc
+2026-08-20 00:16:03.419 [main] INFO  [payment-service] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-08-20 00:16:03.521 [main] INFO  [payment-service] o.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 18.4
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-08-20 00:16:04.922 [main] INFO  [payment-service] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-08-20 00:16:05.008 [main] INFO  [payment-service] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-08-20 00:16:09.156 [main] INFO  [payment-service] o.s.c.n.e.c.DiscoveryClientOptionalArgsConfiguration - Eureka HTTP Client uses RestTemplate.
+2026-08-20 00:16:09.303 [main] WARN  [payment-service] o.s.c.l.c.LoadBalancerCacheAutoConfiguration$LoadBalancerCaffeineWarnLogger - Spring Cloud LoadBalancer is currently working with the default cache. While this cache implementation is useful for development and tests, it's recommended to use Caffeine cache in production.You can switch to using Caffeine cache, by adding it and org.springframework.cache.caffeine.CaffeineCacheManager to the classpath.
+2026-08-20 00:16:09.368 [main] INFO  [payment-service] o.s.b.a.e.web.EndpointLinksResolver - Exposing 26 endpoints beneath base path '/actuator'
+2026-08-20 00:16:09.589 [main] INFO  [payment-service] o.s.c.n.eureka.InstanceInfoFactory - Setting initial instance status as: STARTING
+2026-08-20 00:16:09.769 [main] INFO  [payment-service] o.s.c.n.e.s.EurekaServiceRegistry - Registering application PAYMENT-SERVICE with eureka with status UP
+2026-08-20 00:16:09.771 [main] INFO  [payment-service] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8087"]
+2026-08-20 00:16:09.807 [main] INFO  [payment-service] o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8087 (http) with context path '/'
+2026-08-20 00:16:09.808 [main] INFO  [payment-service] o.s.c.n.e.s.EurekaAutoServiceRegistration - Updating port to 8087
+2026-08-20 00:16:10.147 [main] INFO  [payment-service] c.e.p.PaymentServiceApplication - Started PaymentServiceApplication in 15.227 seconds (process running for 16.595)
+2026-08-20 00:16:10.385 [RMI TCP Connection(4)-127.0.0.1] INFO  [payment-service] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-08-20 00:16:10.386 [RMI TCP Connection(4)-127.0.0.1] INFO  [payment-service] o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-08-20 00:16:10.390 [RMI TCP Connection(4)-127.0.0.1] INFO  [payment-service] o.s.web.servlet.DispatcherServlet - Completed initialization in 3 ms
+2026-08-20 00:16:35.624 [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] INFO  [payment-service] o.s.k.l.KafkaMessageListenerContainer - payment-service: partitions assigned: [inventory.stock-reserved.v1-0]
+2026-08-20 00:16:56.604 [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] INFO  [payment-service] c.e.payment.service.PaymentService - PaymentService: onInventoryReserved | orderId=a607f6b0-351e-4cf8-a5de-d718186a9307 | reservationId=7090f110-89d5-4b5d-895a-241524da2ad5
+2026-08-20 00:16:56.869 [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] DEBUG [payment-service] org.hibernate.SQL - select p1_0.payment_id from payments p1_0 where p1_0.order_id=? fetch first ? rows only
+2026-08-20 00:16:59.286 [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] INFO  [payment-service] c.e.payment.service.PaymentService - Gateway response | orderId=a607f6b0-351e-4cf8-a5de-d718186a9307 | txnId=TXN-UPI-39DD6B9020 | status=SUCCESS
+2026-08-20 00:16:59.489 [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] INFO  [payment-service] c.e.payment.service.PaymentService - Payment SUCCESS | orderId=a607f6b0-351e-4cf8-a5de-d718186a9307 | txnId=TXN-UPI-39DD6B9020
+2026-08-20 00:16:59.545 [org.springframework.kafka.KafkaListenerEndpointContainer#0-0-C-1] DEBUG [payment-service] org.hibernate.SQL - insert into payments (created_at,failure_reason,order_id,status,transaction_id,updated_at,version,payment_id) values (?,?,?,?,?,?,?,?)

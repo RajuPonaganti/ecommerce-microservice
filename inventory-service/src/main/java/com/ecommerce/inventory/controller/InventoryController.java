@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ecommerce.inventory.dtos.InventoryAvailabilityDTO;
 import com.ecommerce.inventory.dtos.InventoryDTO;
+import com.ecommerce.inventory.dtos.ProductResponse;
 import com.ecommerce.inventory.service.InventorySevice;
 
 import jakarta.validation.Valid;
@@ -38,4 +39,10 @@ public class InventoryController {
 			@RequestParam(defaultValue = "1") int requiredQuantity) {
 		return service.getAvailability(productId, requiredQuantity);
 	}
+	
+	
+	@GetMapping("/{productId}")
+    public ResponseEntity<ProductResponse> getInventory(@PathVariable UUID productId) {
+		return ResponseEntity.ok(service.getInventory(productId));
+    }
 }

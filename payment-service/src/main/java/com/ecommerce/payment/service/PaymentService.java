@@ -1,9 +1,14 @@
 package com.ecommerce.payment.service;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.UUID;
 
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.Header;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -16,7 +21,6 @@ import com.ecommerce.commons.InventoryReleaseRequestedEvent;
 import com.ecommerce.commons.InventoryReservedEvent;
 import com.ecommerce.commons.PaymentCompletedEvent;
 import com.ecommerce.commons.PaymentFailedEvent;
-import com.ecommerce.payment.client.PaymentGatewayClient;
 import com.ecommerce.payment.dtos.GatewayApiResponse;
 import com.ecommerce.payment.dtos.GatewayInitiateRequest;
 import com.ecommerce.payment.exception.PaymentGatewayUnavailableException;
@@ -47,100 +51,87 @@ public class PaymentService {
 	private String merchantId;
 
 	/**
-    * Listens for inventory.stock-reserved.v1.
-    * When inventory is reserved for an order, this triggers the payment charge.
-    *
-    * Flow:
-    *  1. Idempotency check — skip if already processed
-    *  2. Call payment-gateway POST /api/v1/payments/initiate (UPI mode — resolves inline)
-    *     via PaymentGatewayInvoker, which wraps the call with CircuitBreaker + Retry
-    *  3. If SUCCESS → publish payment.completed.v1
-    *  4. If FAILED  → publish payment.failed.v1
-    *     (Order Service cancels order → Inventory Service releases reservation)
-    */
-   @KafkaListener(
-           topics   = EventName.INVENTORY_STOCK_RESERVED_EVENT_V1,
-           groupId  = GroupIdName.PAYMENT_SERVICE
-   )
-   @Transactional
-   public void onInventoryReserved(InventoryReservedEvent event) {
-       log.info("PaymentService: onInventoryReserved | orderId={} | reservationId={}",
-               event.orderId(), event.reservationId());
+	 * Listens for inventory.stock-reserved.v1. When inventory is reserved for an
+	 * order, this triggers the payment charge.
+	 *
+	 * Flow: 1. Idempotency check — skip if already processed 2. Call
+	 * payment-gateway POST /api/v1/payments/initiate (UPI mode — resolves inline)
+	 * via PaymentGatewayInvoker, which wraps the call with CircuitBreaker + Retry
+	 * 3. If SUCCESS → publish payment.completed.v1 4. If FAILED → publish
+	 * payment.failed.v1 (Order Service cancels order → Inventory Service releases
+	 * reservation)
+	 */
+	@KafkaListener(topics = EventName.INVENTORY_STOCK_RESERVED_EVENT_V1, groupId = GroupIdName.PAYMENT_SERVICE)
+	@Transactional
+	public void onInventoryReserved(ConsumerRecord<String, InventoryReservedEvent> record) {
+		Header traceHeader = record.headers().lastHeader("traceId");
+		String traceId = traceHeader != null ? new String(traceHeader.value(), StandardCharsets.UTF_8)
+				: UUID.randomUUID().toString(); // fallback if missing
 
-       // 1. Idempotency — skip if this order was already charged
-       if (paymentRepository.existsByOrderId(event.orderId())) {
-           log.warn("Duplicate inventory.reserved event for orderId={} — skipping",
-                   event.orderId());
-           return;
-       }
+		MDC.put("traceId", traceId);
+		InventoryReservedEvent event = record.value();
+		log.info("PaymentService: onInventoryReserved | orderId={} | reservationId={}", event.orderId(),
+				event.reservationId());
 
-       try {
-           GatewayApiResponse gatewayResponse = initiatedPayment(event);
+		// 1. Idempotency — skip if this order was already charged
+		if (paymentRepository.existsByOrderId(event.orderId())) {
+			log.warn("Duplicate inventory.reserved event for orderId={} — skipping", event.orderId());
+			return;
+		}
 
-           String transactionId = gatewayResponse.getData() != null
-                   ? gatewayResponse.getData().getTransactionId()
-                   : null;
-           String gatewayStatus = gatewayResponse.getData() != null
-                   ? gatewayResponse.getData().getStatus()
-                   : "FAILED";
+		try {
+			GatewayApiResponse gatewayResponse = initiatedPayment(event);
 
-           log.info("Gateway response | orderId={} | txnId={} | status={}",
-                   event.orderId(), transactionId, gatewayStatus);
+			String transactionId = gatewayResponse.getData() != null ? gatewayResponse.getData().getTransactionId()
+					: null;
+			String gatewayStatus = gatewayResponse.getData() != null ? gatewayResponse.getData().getStatus() : "FAILED";
 
-           if ("SUCCESS".equalsIgnoreCase(gatewayStatus)) {
-               paymentRepository.save(Payment.builder()
-                       .orderId(event.orderId())
-                       .transactionId(transactionId)
-                       .status(PaymentStatus.SUCCESS)
-                       .createdAt(Instant.now())
-                       .build());
+			log.info("Gateway response | orderId={} | txnId={} | status={}", event.orderId(), transactionId,
+					gatewayStatus);
 
-               kafkaTemplate.send(
-                       EventName.PAYMENT_COMPLETED_EVENT_V1,
-                       event.orderId().toString(),
-                       new PaymentCompletedEvent(UUID.randomUUID(),
-                               event.orderId(), Instant.now(),
-                               transactionId
-                       ));
+			if ("SUCCESS".equalsIgnoreCase(gatewayStatus)) {
+				paymentRepository.save(Payment.builder().orderId(event.orderId()).transactionId(transactionId)
+						.status(PaymentStatus.SUCCESS).createdAt(Instant.now()).build());
+				PaymentCompletedEvent paymentCompletedEvent = new PaymentCompletedEvent(UUID.randomUUID(),
+						event.orderId(), Instant.now(), transactionId);
 
-               log.info("Payment SUCCESS | orderId={} | txnId={}", event.orderId(), transactionId);
+				ProducerRecord<String, Object> record1 = new ProducerRecord<>(EventName.PAYMENT_COMPLETED_EVENT_V1,
+						event.orderId().toString(), paymentCompletedEvent);
 
-           } else {
-               String reason = gatewayResponse.getData() != null
-                       ? gatewayResponse.getData().getMessage()
-                       : "Payment gateway declined";
-               handleFailure(event.orderId().toString(), reason);
-           }
+				if (traceId != null) {
+					record1.headers().add("traceId", traceId.getBytes(StandardCharsets.UTF_8));
+				}
 
-       } catch (PaymentGatewayUnavailableException ex) {
-           // Circuit open / retries exhausted — treat as a transient
-           // failure the same way as any other gateway error for now.
-           // (If you later want "hold and re-attempt" behavior instead
-           // of immediately cancelling the order, branch here.)
-           log.error("Payment gateway unavailable for orderId={}", event.orderId(), ex);
-           handleFailure(event.orderId().toString(),
-                   "Gateway unavailable: " + ex.getMessage());
+				kafkaTemplate.send(record1);
 
-       } catch (Exception ex) {
-           log.error("Payment gateway call failed for orderId={}", event.orderId(), ex);
-           handleFailure(event.orderId().toString(),
-                   "Gateway error: " + ex.getMessage());
-       }
-   }
+				log.info("Payment SUCCESS | orderId={} | txnId={}", event.orderId(), transactionId);
+
+			} else {
+				String reason = gatewayResponse.getData() != null ? gatewayResponse.getData().getMessage()
+						: "Payment gateway declined";
+				handleFailure(event.orderId().toString(), reason, traceId);
+			}
+
+		} catch (PaymentGatewayUnavailableException ex) {
+			// Circuit open / retries exhausted — treat as a transient
+			// failure the same way as any other gateway error for now.
+			// (If you later want "hold and re-attempt" behavior instead
+			// of immediately cancelling the order, branch here.)
+			log.error("Payment gateway unavailable for orderId={}", event.orderId(), ex);
+			handleFailure(event.orderId().toString(), "Gateway unavailable: " + ex.getMessage(), traceId);
+
+		} catch (Exception ex) {
+			log.error("Payment gateway call failed for orderId={}", event.orderId(), ex);
+			handleFailure(event.orderId().toString(), "Gateway error: " + ex.getMessage(), traceId);
+		}
+	}
 
 	private GatewayApiResponse initiatedPayment(InventoryReservedEvent event) {
-		GatewayInitiateRequest gatewayRequest = GatewayInitiateRequest.builder()
-		        .orderId(event.orderId().toString())
-		        .merchantId(merchantId)
-		        .amount(BigDecimal.valueOf(1))   // placeholder — amount from order
-		        .currency("INR")
-		        .paymentMode("UPI")
-		        .upiId("payment-service@upi")
-		        .customerName("Internal Service")
-		        .customerEmail("payment-service@ecommerce.com")
-		        .customerPhone("9999999999")
-		        .description("Payment for order " + event.orderId())
-		        .build();
+		GatewayInitiateRequest gatewayRequest = GatewayInitiateRequest.builder().orderId(event.orderId().toString())
+				.merchantId(merchantId).amount(BigDecimal.valueOf(1)) // placeholder — amount from order
+				.currency("INR").paymentMode("UPI").upiId("payment-service@upi").customerName("Internal Service")
+				.customerEmail("payment-service@ecommerce.com").customerPhone("9999999999")
+				.description("Payment for order " + event.orderId()).build();
 
 		// Delegate to the CircuitBreaker/Retry-wrapped bean.
 		// orderId is passed as the idempotency key (see Feign client).
@@ -149,16 +140,34 @@ public class PaymentService {
 
 	// ── helpers ───────────────────────────────────────────────────────────────
 
-	private void handleFailure(String orderIdStr, String reason) {
+	private void handleFailure(String orderIdStr, String reason, String traceId) {
 		java.util.UUID orderId = java.util.UUID.fromString(orderIdStr);
 
 		paymentRepository.save(Payment.builder().orderId(orderId).status(PaymentStatus.FAILED).failureReason(reason)
 				.createdAt(Instant.now()).build());
+		PaymentFailedEvent paymentFailedEvent = new PaymentFailedEvent(UUID.randomUUID(), orderId, Instant.now(),
+				reason);
 
-		kafkaTemplate.send(EventName.PAYMENT_FAILED_EVENT_V1, orderIdStr, new PaymentFailedEvent(UUID.randomUUID(), orderId, Instant.now(),reason));
+		ProducerRecord<String, Object> record = new ProducerRecord<>(EventName.PAYMENT_FAILED_EVENT_V1, orderIdStr,
+				paymentFailedEvent);
 
-		kafkaTemplate.send(EventName.INVENTORY_RELEASE_REQUESTED_V1, orderIdStr,
-				new InventoryReleaseRequestedEvent(orderId, reason));
+		if (traceId != null) {
+			record.headers().add("traceId", traceId.getBytes(StandardCharsets.UTF_8));
+		}
+
+		kafkaTemplate.send(record);
+
+		InventoryReleaseRequestedEvent inventoryReleaseRequestedEvent = new InventoryReleaseRequestedEvent(orderId,
+				reason);
+
+		ProducerRecord<String, Object> record1 = new ProducerRecord<>(EventName.INVENTORY_RELEASE_REQUESTED_V1,
+				orderIdStr, inventoryReleaseRequestedEvent);
+
+		if (traceId != null) {
+			record1.headers().add("traceId", traceId.getBytes(StandardCharsets.UTF_8));
+		}
+
+		kafkaTemplate.send(record);
 
 		log.warn("Payment FAILED | orderId={} | reason={}", orderId, reason);
 	}

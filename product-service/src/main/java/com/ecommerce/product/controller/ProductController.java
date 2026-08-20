@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ecommerce.product.dto.ProductCreateDto;
 import com.ecommerce.product.dto.ProductDto;
+import com.ecommerce.product.dto.ProductResponse;
 import com.ecommerce.product.dto.ProductUpdateDto;
 import com.ecommerce.product.service.ProductService;
 import com.ecommerce.product.service.ProductService.ProductAccessDeniedException;
@@ -49,6 +50,11 @@ public class ProductController {
 	@GetMapping("/{productId}")
 	public ResponseEntity<ProductDto> getProduct(@PathVariable final UUID productId) {
 		return ResponseEntity.ok(productService.getProduct(productId));
+	}
+	
+	@GetMapping("/order/{productId}")
+	public ResponseEntity<ProductResponse> getProductForOrder(@PathVariable final UUID productId) {
+		return ResponseEntity.ok(productService.getProductForOrder(productId));
 	}
 
 	// PUT /v1/products/{productId} — JWT (SELLER, owns product)

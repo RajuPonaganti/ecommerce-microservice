@@ -1,6 +1,7 @@
 package com.ecommerce.product.service;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -10,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ecommerce.product.dto.ProductCreateDto;
 import com.ecommerce.product.dto.ProductDto;
+import com.ecommerce.product.dto.ProductResponse;
 import com.ecommerce.product.dto.ProductUpdateDto;
 import com.ecommerce.product.model.Product;
 import com.ecommerce.product.model.ProductStatus;
@@ -161,5 +163,15 @@ public class ProductService {
 		public ProductAccessDeniedException(UUID productId, UUID sellerId) {
 			super("Seller " + sellerId + " does not own product " + productId);
 		}
+	}
+
+	public ProductResponse getProductForOrder(UUID productId) {
+		 Optional<Product> byId = productRepository.findById(productId);
+		 if(byId.isPresent()) {
+			 Product product = byId.get();
+			 return new ProductResponse(product.getProductId(), product.getTitle(), product.getPrice(), null);
+		 }
+			 
+		return null;
 	}
 }

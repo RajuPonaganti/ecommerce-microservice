@@ -1,13 +1,74 @@
+server:
+  port: 9988
 spring:
   application:
     name: api-gateway
   cloud:
     gateway:
-      server:
-        webmvc:
-          routes:
-          - id: product-service-route
-            uri: lb://product-service
-            predicates:
-            - Path= /api/v1/products/**
-           
+      routes:
+        - id: auth-service
+          uri: lb://auth-service          # lb:// = load-balanced via Eureka
+          predicates:
+            - Path=/auth/**
+
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/users/**
+          filters:
+            - RewritePath=/users/(?<segment>.*), /$\{segment}
+            
+        - id: order-service
+          uri: lb://order-service          # lb:// = load-balanced via Eureka
+          predicates:
+            - Path=/v1/orders/**
+          filters:
+            - RewritePath=/v1/orders/(?<segment>.*), /$\{segment}
+        
+        - id: inventory-service
+          uri: lb://inventory-service
+          predicates:
+            - Path=/v1/inventory/**
+          filters:
+            - RewritePath=/v1/inventory/(?<segment>.*), /$\{segment}
+            
+        - id: product-service
+          uri: lb://product-service          # lb:// = load-balanced via Eureka
+          predicates:
+            - Path=/v1/product/**
+
+        # No route is defined for /internal/**, so the gateway has no path
+        # that forwards there — that's what actually keeps it unreachable
+        # from outside. Don't rely on public-paths alone for this; that list
+        # only controls JWT enforcement, not routability.
+
+gateway:
+  jwt:
+    secret: ${JWT_SECRET:XqaPg9V75tgYuV+nCTjBQXSIfDYuB7pL4GLUOeu66gE=}          # same value as auth-service's security.jwt.secret
+    public-paths:
+      - /actuator/**
+      - /auth/login
+      - /auth/refresh
+eureka:
+  client:
+    register-with-eureka: true
+    service-url:
+      defaultZone: "http://localhost:8761/eureka/"
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, prometheus  # explicit allowlist, not "*"
+  endpoint:
+    health:
+      show-details: when-authorized   # don't leak DB/disk details to anonymous callers
+  tracing:
+    sampling:
+      probability: 0.1   # lower in prod, as discussed
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans    

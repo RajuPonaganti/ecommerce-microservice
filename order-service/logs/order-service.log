@@ -1,1 +1,4 @@
 2026-08-20 00:16:56.339 [http-nio-8083-exec-5] INFO  [order-service] c.e.order.service.OrderService - OrderService.createOrder() | userId=512dbc3c-34fb-4b4a-b193-ccdba9800058 | itemCount=1 | totalAmount=50000
+2026-08-20 00:16:56.362 [http-nio-8083-exec-5] INFO  [order-service] c.e.order.service.OrderService - OrderService.createOrder() | order created | orderId=a607f6b0-351e-4cf8-a5de-d718186a9307 | status=CREATED
+2026-08-20 00:16:56.375 [http-nio-8083-exec-5] DEBUG [order-service] org.hibernate.SQL - insert into tbl_order (coupon_code,created_at,discount_amount,final_amount,payment_ref,status,tax_amount,total_amount,user_id,version,order_id) values (?,?,?,?,?,?,?,?,?,?,?)
+2026-08-20 00:16:56.384 [http-nio-8083-exec-5] DEBUG [order-service] org.hibernate.SQL - insert into order_item (product_id,quantity,seller_id,sku,order_id,unit_price,order_item_id) values (?,?,?,?,?,?,?)
